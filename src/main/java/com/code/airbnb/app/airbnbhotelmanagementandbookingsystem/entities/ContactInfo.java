@@ -17,8 +17,9 @@ public class ContactInfo {
 
     private String phoneNumber;
 
-    // To Keep consistency of Objects
-    @OneToOne
+
+     @OneToOne
+     @Transient // OneToOne is still valid but this just wont appear in the table
      private Hotel hotel;
 
 }

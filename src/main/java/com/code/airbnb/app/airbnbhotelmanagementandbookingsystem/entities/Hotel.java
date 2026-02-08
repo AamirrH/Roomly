@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class Hotel {
@@ -19,6 +20,9 @@ public class Hotel {
     @OneToOne
     private ContactInfo contactInfo;
 
+    @OneToMany(mappedBy = "room")
+    private List<Room> rooms;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -26,6 +30,8 @@ public class Hotel {
     private LocalDateTime updatedAt;
 
     private Boolean isActive;
+
+
 
 
 
