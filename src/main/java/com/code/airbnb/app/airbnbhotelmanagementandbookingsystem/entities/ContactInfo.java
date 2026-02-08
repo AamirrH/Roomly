@@ -17,9 +17,8 @@ public class ContactInfo {
 
     private String phoneNumber;
 
-
-     @OneToOne
-     @Transient // OneToOne is still valid but this just wont appear in the table
+     @OneToOne(mappedBy = "contactInfo")
+     // OneToOne is still valid but this just won't appear in the table
      private Hotel hotel;
 
 }

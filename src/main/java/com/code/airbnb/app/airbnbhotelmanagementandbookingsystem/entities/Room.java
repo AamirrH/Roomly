@@ -4,13 +4,19 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
+@Getter
+@Setter
 public class Room {
 
     @Id
@@ -34,5 +40,9 @@ public class Room {
 
     // Capacity of a specific type of room
     private Integer capacity;
+
+    @OneToMany(mappedBy = "roomId")
+    private List<Inventory> inventories;
+
 
 }

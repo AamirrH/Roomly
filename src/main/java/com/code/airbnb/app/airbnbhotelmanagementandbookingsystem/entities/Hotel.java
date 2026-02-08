@@ -15,6 +15,7 @@ public class Hotel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long hotelId;
 
+
     private String city;
 
     @OneToOne
@@ -30,6 +31,9 @@ public class Hotel {
     private LocalDateTime updatedAt;
 
     private Boolean isActive;
+
+    @OneToMany(mappedBy = "hotelId")
+    private List<Inventory> inventories;
 
 
 
