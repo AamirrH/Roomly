@@ -1,10 +1,13 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.controllers;
 
 
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelRequestDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HotelService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.RoomService;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,24 +25,25 @@ public class HotelManagerControllers {
 
 
     @GetMapping("/hotels")
-    private ResponseEntity<List<Hotel>> findAll() {
+    private ResponseEntity<List<HotelResponseDTO>> findAll() {
         return ResponseEntity.ok(hotelService.findAll());
     }
 
+
     @PostMapping("/hotel")
-    private ResponseEntity<Hotel> createHotel(@RequestBody Hotel hotel) {
-        return ResponseEntity.ok(hotelService.createHotel(hotel));
+    private ResponseEntity<HotelResponseDTO> createHotel(@RequestBody @Valid HotelRequestDTO hotelRequestDTO) {
+        return ResponseEntity.ok(hotelService.createHotel(hotelRequestDTO));
     }
 
     @GetMapping("/hotels/{hotelId}")
-    private ResponseEntity<Hotel> findHotelById(@PathVariable(name = "hotelId") Long id ){
+    private ResponseEntity<HotelResponseDTO> findHotelById(@PathVariable(name = "hotelId") Long id ){
         return ResponseEntity.ok(hotelService.findById(id));
     }
 
-    @PatchMapping("/hotels/{hotelId}")
-    private ResponseEntity<Hotel> updateHotelByHotelId(@PathVariable(name = "hotelId") Long id, @RequestBody Hotel hotel) {
-        return hotelService.updateHotelByHotelId();
-    }
+//    @PatchMapping("/hotels/{hotelId}")
+//    private ResponseEntity<HotelResponseDTO> updateHotelByHotelId(@PathVariable(name = "hotelId") Long id, @RequestBody HotelRequestDTO hotelRequestDTO) {
+//        return hotelService.updateHotelByHotelId();
+//    }
 
 
 

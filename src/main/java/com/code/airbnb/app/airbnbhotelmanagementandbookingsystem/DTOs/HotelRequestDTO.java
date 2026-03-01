@@ -23,7 +23,7 @@ public class HotelRequestDTO {
 
     @NotNull(message = "Contact info is required")
     @Valid                          // triggers nested validation on ContactInfoDto
-    private ContactInfoDto contactInfo;
+    private ContactInfoDTO contactInfo;
 
     @Size(max = 20, message = "Cannot have more than 20 photos")
     @Builder.Default

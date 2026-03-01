@@ -19,7 +19,6 @@ public class HotelResponseDTO {
 
     private String city;
 
-
     private List<String> photos = new ArrayList<>();
 
     private List<String> amenities = new ArrayList<>();

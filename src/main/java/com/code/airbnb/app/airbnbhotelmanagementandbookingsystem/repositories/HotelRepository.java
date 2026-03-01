@@ -14,4 +14,6 @@ public interface HotelRepository extends JpaRepository<Hotel, Integer> {
     void deleteHotelById(Long id);
 
     Hotel getHotelById(Long id);
+
+
 }
