@@ -1,7 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
 
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomPatchDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomRequestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
@@ -10,9 +10,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.Hote
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.RoomRepository;
 import jakarta.transaction.Transactional;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +43,7 @@ public class RoomService {
             // Hotel exists, hence add the room.
             Hotel hotel = hotelRepository.findHotelById(hotelId);
             Room roomToAdd = modelMapper.map(room, Room.class);
+            // Set hotel to the room
             roomToAdd.setHotel(hotel);
             roomRepository.save(roomToAdd);
             return modelMapper.map(roomToAdd, RoomResponseDTO.class);
@@ -54,4 +53,35 @@ public class RoomService {
         }
     }
 
+    // Getting a Room by providing a Hotel id and a Room id
+
+    public RoomResponseDTO getRoomById(Long roomId, Long  hotelId){
+        // First we have to find Hotel
+        Room room = roomRepository.findByIdAndHotelId(roomId,hotelId).orElseThrow(() ->
+                new HotelNotFoundException("Either Hotel id or Room id is Wrong."));
+        return modelMapper.map(room, RoomResponseDTO.class);
+    }
+
+    public RoomResponseDTO updateRoom(Long roomId, Long hotelId, RoomPatchDTO roomPatchDTO) {
+        Room room = roomRepository.findByIdAndHotelId(roomId,hotelId).orElseThrow(() ->
+                new HotelNotFoundException("Either Hotel id or Room id is Wrong."));
+
+        // Only maps non-null fields
+        ModelMapper patchMapper = new ModelMapper();
+        // This is global so we create a seperate instance of model mapper.
+        patchMapper.getConfiguration().setSkipNullEnabled(true);
+        patchMapper.map(roomPatchDTO, room);
+
+        Room savedRoom = roomRepository.save(room);
+        return modelMapper.map(savedRoom, RoomResponseDTO.class);
+    }
+
+    @Transactional
+    public void deleteRoom(Long roomId, Long hotelId) {
+        // Finding the Room of the Specific Hotel
+        Room room = roomRepository.findByIdAndHotelId(roomId,hotelId).orElseThrow(() ->
+                new HotelNotFoundException("Either Hotel id or Room id is Wrong."));
+        // Delete The Room.
+        roomRepository.delete(room);
+    }
 }

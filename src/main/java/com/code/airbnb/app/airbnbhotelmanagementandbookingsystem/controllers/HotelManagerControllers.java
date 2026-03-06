@@ -1,10 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.controllers;
 
 
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelRequestDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomRequestDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
@@ -60,6 +57,30 @@ public class HotelManagerControllers {
     private ResponseEntity<RoomResponseDTO> addRooms(@RequestBody @Valid RoomRequestDTO room, @PathVariable(name = "hotelId") Long id ){
         return ResponseEntity.ok(roomService.addRoomToHotel(room,id));
     }
+
+    // Get a Particular Room of a Particular Hotel
+    @GetMapping("/hotels/{hotelId}/rooms/{roomId}")
+    private ResponseEntity<RoomResponseDTO> getRoom(@PathVariable Long hotelId,
+                                                    @PathVariable Long roomId){
+        return ResponseEntity.ok(roomService.getRoomById(roomId, hotelId));
+    }
+
+    @PatchMapping("/hotels/{hotelId}/rooms/{roomId}")
+    private ResponseEntity<RoomResponseDTO> updateRoom(@PathVariable Long hotelId,
+                                                    @PathVariable Long roomId,
+                                                    @RequestBody RoomPatchDTO roomPatchDTO){
+        return ResponseEntity.ok(roomService.updateRoom(roomId, hotelId, roomPatchDTO));
+    }
+
+    @DeleteMapping("/hotels/{hotelId}/rooms/{roomId}")
+    private void deleteRoom(@PathVariable Long hotelId, @PathVariable Long roomId){
+        roomService.deleteRoom(roomId, hotelId);
+        ResponseEntity.ok("Room Successfully deleted!");
+    }
+
+
+
+
 
 
 
