@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
 
 
+    void deleteByRoom_IdAndHotel_Id(Long roomId, Long hotelId);
 
 
 }

@@ -6,6 +6,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomReques
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.HotelNotActiveException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.HotelNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.RoomRepository;
@@ -26,6 +27,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final ModelMapper modelMapper;
+    private final InventoryService inventoryService;
 
     // Getting all rooms that belong to a specific hotel
     public List<RoomResponseDTO> getAllRoomsByHotelId(Long hotelId){
@@ -46,6 +48,14 @@ public class RoomService {
             // Set hotel to the room
             roomToAdd.setHotel(hotel);
             roomRepository.save(roomToAdd);
+            // Initialize Inventory for a Year
+            if(hotel.getActive()){
+                // Hotel is active, Initialize Inventory with the room
+                inventoryService.initialiseRoomForAYear(roomToAdd);
+            }
+            else{
+                throw new HotelNotActiveException("Hotel with hotel id " + hotelId + " is not active");
+            }
             return modelMapper.map(roomToAdd, RoomResponseDTO.class);
         }
         else{
@@ -73,6 +83,10 @@ public class RoomService {
         patchMapper.map(roomPatchDTO, room);
 
         Room savedRoom = roomRepository.save(room);
+
+        // Inventory Configurations - only totalCount can be changed.
+
+
         return modelMapper.map(savedRoom, RoomResponseDTO.class);
     }
 
@@ -81,7 +95,12 @@ public class RoomService {
         // Finding the Room of the Specific Hotel
         Room room = roomRepository.findByIdAndHotelId(roomId,hotelId).orElseThrow(() ->
                 new HotelNotFoundException("Either Hotel id or Room id is Wrong."));
+
+        // Delete all the inventories of this room too.
+        inventoryService.deleteByRoomIdAndHotelId(roomId, hotelId);
+
         // Delete The Room.
         roomRepository.delete(room);
+
     }
 }

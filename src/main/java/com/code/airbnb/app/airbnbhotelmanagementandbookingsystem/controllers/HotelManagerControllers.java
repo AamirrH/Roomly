@@ -46,7 +46,7 @@ public class HotelManagerControllers {
 //        return hotelService.updateHotelByHotelId();
 //    }
 
-    // Get All Rooms of a Particular Hotel with Hotel Id
+    // Get All Rooms of a Particular Hotel with Hotel I'd
     @GetMapping("/hotels/{hotelId}/rooms")
     private ResponseEntity<List<RoomResponseDTO>> findAllRoomsByHotelId(@PathVariable(name = "hotelId") Long id ){
         return ResponseEntity.ok(roomService.getAllRoomsByHotelId(id));
