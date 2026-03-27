@@ -9,6 +9,8 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.Ro
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,8 +26,6 @@ public class HotelService {
     private final ModelMapper modelMapper;
     private final InventoryRepository inventoryRepository;
     private final RoomRepository roomRepository;
-
-
 
 
     public List<HotelResponseDTO> findAll() {
@@ -49,16 +49,6 @@ public class HotelService {
     public HotelResponseDTO findById(Long id){
         return modelMapper.map(hotelRepository.findHotelById(id),HotelResponseDTO.class);
     }
-
-    public List<HotelResponseDTO> searchHotels(String city, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms,Integer totaldays) {
-        Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-        return inventoryRepository.findAvailableHotels(city,checkInDate,checkOutDate,numberOfRooms,totalDays)
-                .stream()
-                .map(hotel ->modelMapper.map(hotel, HotelResponseDTO.class))
-                .collect(Collectors.toList());
-
-    }
-
 
     public List<HotelResponseDTO> showHotelDetails(Long hotelId,LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms,Integer totaldays) {
         return roomRepository.findAllRoomsByHotelId(hotelId).

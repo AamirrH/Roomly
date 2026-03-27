@@ -1,8 +1,9 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories;
 
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Inventory;
-import org.hibernate.query.Page;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +19,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
 
     void deleteByRoom_IdAndHotel_Id(Long roomId, Long hotelId);
 
-    @Query("""
+    @Query(value = """
        SELECT DISTINCT i.hotel FROM Inventory i
        WHERE i.hotel.city = :city
        AND i.date BETWEEN :checkInDate AND :checkOutDate
@@ -27,13 +28,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
        GROUP BY i.hotel
        HAVING COUNT(i) = :totalDays
        """)
-    Page<Hotel> findAvailableHotels(
+    Page<HotelResponseDTO> findAvailableHotels(
             @Param("city") String city,
             @Param("checkInDate") LocalDate checkInDate,
             @Param("checkOutDate") LocalDate checkOutDate,
             @Param("numberOfRooms") Integer numberOfRooms,
             @Param("totalDays") Long totalDays,
             Pageable pageable
-
     );
 }
