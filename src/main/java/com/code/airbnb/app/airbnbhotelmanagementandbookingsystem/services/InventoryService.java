@@ -38,7 +38,6 @@ public class InventoryService {
         // Single-DB call is efficient
         inventoryRepository.saveAll(inventoryList);
     }
-
     public void deleteByRoomIdAndHotelId(Long roomId, Long hotelId) {
         // Deletes all rows with the specified roomId and HotelId
         inventoryRepository.deleteByRoom_IdAndHotel_Id(roomId, hotelId);
