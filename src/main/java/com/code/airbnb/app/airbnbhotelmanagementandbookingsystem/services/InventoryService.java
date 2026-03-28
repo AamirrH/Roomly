@@ -1,6 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Inventory;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.InventoryRepository;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +50,7 @@ public class InventoryService {
         // Deletes all rows with the specified roomId and HotelId
         inventoryRepository.deleteByRoom_IdAndHotel_Id(roomId, hotelId);
     }
-    // Customer Service Method
+     //Customer Service Method
     public Page<HotelResponseDTO> searchHotels(String city, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms, Pageable pageable) {
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return inventoryRepository.findAvailableHotels(city, checkInDate, checkOutDate, numberOfRooms, totalDays, pageable)
@@ -56,4 +58,11 @@ public class InventoryService {
     }
 
 
+    public List<RoomResponseDTO> getAvailableRoomsForHotel(Long hotelId, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms) {
+        Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+        return inventoryRepository.findAvailableRoomsForHotel(hotelId, checkInDate, checkOutDate, numberOfRooms, totalDays)
+                .stream()
+                .map(room -> modelMapper.map(room, RoomResponseDTO.class))
+                .collect(Collectors.toList());
+    }
 }

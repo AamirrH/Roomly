@@ -56,4 +56,7 @@ public class HotelService {
                 .map(room -> modelMapper.map(room, HotelResponseDTO.class))
                 .collect(Collectors.toList());
     }
+
+
+
 }

@@ -1,7 +1,9 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.controllers;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HotelService;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.InventoryService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/hotels")
@@ -18,6 +21,8 @@ import java.time.LocalDate;
 public class GuestSearchControllers {
 
     private final HotelService  hotelService;
+    private final InventoryService inventoryService;
+    private final RoomService roomService;
 
     @GetMapping("/search")
     private ResponseEntity<Page<HotelResponseDTO>> searchHotels(@RequestParam(required = false) String city,
@@ -27,15 +32,25 @@ public class GuestSearchControllers {
                                                                 @RequestParam(defaultValue = "0") Integer pageNumber,
                                                                 @RequestParam(defaultValue = "10") Integer pageSize){
         Pageable pageable = PageRequest.of(pageNumber,pageSize);
-        return ResponseEntity.ok(hotelService.searchHotels(city,checkInDate,checkOutDate,numberOfRooms,pageable));
+        return ResponseEntity.ok(inventoryService.searchHotels(city,checkInDate,checkOutDate,numberOfRooms,pageable));
     }
-//    @GetMapping("/{hotelId}")
-//    private ResponseEntity<HotelResponseDTO> getHotelById(@PathVariable Long hotelId,
-//                                                          @RequestParam(required = false) LocalDate checkInDate,
-//                                                          @RequestParam(required = false) LocalDate checkOutDate,
-//                                                          @RequestParam(required = false) Integer numberOfRooms){
-//        return ResponseEntity.ok(hotelService.showHotelDetails(hotelId,checkInDate,checkOutDate,numberOfRooms);
-//    }
+
+    // Search a specific hotel with given parameters
+    @GetMapping("/{hotelId}")
+    private ResponseEntity<List<RoomResponseDTO>> getHotels(@RequestParam(required = false) LocalDate checkInDate,
+                                                            @RequestParam(required = false) LocalDate checkOutDate,
+                                                            @RequestParam(required = false) Integer numberOfRooms,
+                                                            @PathVariable Long hotelId){
+        return ResponseEntity.ok(inventoryService.getAvailableRoomsForHotel(hotelId, checkInDate, checkOutDate, numberOfRooms));
+
+    }
+
+    // Get All Static Details of a Specific Room of a Specific Hotel
+    @GetMapping("/{hotelId}/rooms/{roomId}")
+    private ResponseEntity<RoomResponseDTO> getGuestRoomDetails(@PathVariable Long hotelId, @PathVariable Long roomId){
+        return ResponseEntity.ok(roomService.getRoomById(roomId,hotelId));
+    }
+
 
 
 

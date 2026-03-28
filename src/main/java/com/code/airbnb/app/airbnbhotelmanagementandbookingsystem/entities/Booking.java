@@ -72,10 +72,4 @@ public class Booking {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * One booking can have many BookingGuest join records.
-     */
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<BookingGuest> bookingGuests = new ArrayList<>();
 }

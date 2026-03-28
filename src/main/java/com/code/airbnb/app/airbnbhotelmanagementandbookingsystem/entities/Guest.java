@@ -38,10 +38,4 @@ public class Guest {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * One guest can appear in many BookingGuest join records.
-     */
-    @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<BookingGuest> bookingGuests = new ArrayList<>();
 }

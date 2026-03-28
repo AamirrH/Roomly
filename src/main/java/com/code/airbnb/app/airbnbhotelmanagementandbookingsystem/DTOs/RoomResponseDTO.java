@@ -23,16 +23,8 @@ public class RoomResponseDTO {
 
     private BigDecimal basePrice;
 
-    private Integer totalCount;
-
-    private Integer capacity;
-
     private List<String> amenities = new ArrayList<>();
 
     private List<String> photos = new ArrayList<>();
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
 
 }
