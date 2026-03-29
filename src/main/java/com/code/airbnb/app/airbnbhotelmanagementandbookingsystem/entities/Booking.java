@@ -46,13 +46,6 @@ public class Booking {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    /**
-     * One booking has exactly one payment.
-     * Booking owns the FK column payment_id.
-     */
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "payment_id", referencedColumnName = "id")
-    private Payment payment;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -62,7 +55,7 @@ public class Booking {
     private LocalDate checkInDate;
 
     @Column(name = "checkout_date", nullable = false)
-    private LocalDate checkoutDate;
+    private LocalDate checkOutDate;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -71,5 +64,7 @@ public class Booking {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    private Integer roomsCount;
 
 }

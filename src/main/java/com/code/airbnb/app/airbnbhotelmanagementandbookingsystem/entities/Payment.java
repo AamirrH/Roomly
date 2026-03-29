@@ -41,10 +41,6 @@ public class Payment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * Bidirectional one-to-one back-reference to Booking.
-     * Booking owns the FK; this side is the inverse.
-     */
-    @OneToOne(mappedBy = "payment")
+    @OneToOne
     private Booking booking;
 }

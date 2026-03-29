@@ -5,9 +5,11 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomRespon
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Inventory;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,6 +56,28 @@ public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
             @Param("checkOutDate") LocalDate checkOutDate,
             @Param("numberOfRooms") Integer numberOfRooms,
             @Param("totalDays") Long totalDays
+    );
+
+    @Query(value =
+            """
+    SELECT i from  Inventory i
+        WHERE i.room.id = :roomId
+            AND i.hotel.id = :hotelId
+             AND i.date >= :checkInDate AND i.date < :checkOutDate
+              AND i.closed = false
+               AND (i.totalCount - i.bookedCount) >= :numberOfRooms
+    """
+    )
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    /*For the specific rows that result due to that query, PESSIMISTIC_WRITE,
+    Other transactions that try to access the same row wait until your transaction finishes.
+     */
+    List<Inventory> findAvailableInventoriesAndLockThem(
+            @Param("hotelId") Long hotelId,
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") Integer numberOfRooms
     );
 
 

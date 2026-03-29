@@ -1,7 +1,10 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.controllers;
 
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingRequestDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.BookingService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HotelService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.InventoryService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.RoomService;
@@ -12,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.print.Book;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,6 +27,7 @@ public class GuestSearchControllers {
     private final HotelService  hotelService;
     private final InventoryService inventoryService;
     private final RoomService roomService;
+    private final BookingService bookingService;
 
     @GetMapping("/search")
     private ResponseEntity<Page<HotelResponseDTO>> searchHotels(@RequestParam(required = false) String city,
@@ -50,6 +55,11 @@ public class GuestSearchControllers {
     private ResponseEntity<RoomResponseDTO> getGuestRoomDetails(@PathVariable Long hotelId, @PathVariable Long roomId){
         return ResponseEntity.ok(roomService.getRoomById(roomId,hotelId));
     }
+
+
+
+
+
 
 
 
