@@ -38,4 +38,7 @@ public class Guest {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToMany(mappedBy = "guests")
+    private List<Booking> booking = new ArrayList<>();
+
 }

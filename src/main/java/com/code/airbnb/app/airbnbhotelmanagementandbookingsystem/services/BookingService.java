@@ -2,13 +2,14 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingRequestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.GuestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.BookingExpiredException;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.BookingNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.InventoryRepository;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.RoomRepository;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +32,13 @@ public class BookingService {
     private final InventoryRepository inventoryRepository;
     private final RoomRepository roomRepository;
     private final ModelMapper modelMapper;
+    private final BookingRepository bookingRepository;
+    private final GuestRepository guestRepository;
+    private final UserRepository userRepository;
 
 
     @Transactional
-    public BookingResponseDTO createBooking(@RequestBody BookingRequestDTO bookingRequestDTO) {
+    public BookingResponseDTO createBooking(BookingRequestDTO bookingRequestDTO) {
         // Getting Values from Request Body
         Long hotelId = bookingRequestDTO.getHotelId();
         Hotel hotel = hotelRepository.findHotelById(hotelId);
@@ -49,7 +54,7 @@ public class BookingService {
         // Check if Rooms are available for these dates.
         List<Inventory> availableRooms = inventoryRepository.findAvailableInventoriesAndLockThem(hotelId, roomId, checkInDate, checkOutDate, numberOfRooms);
 
-        long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate) + 1;
+        long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         // Check if the rooms are available or not
         if(availableRooms.size() != totalDays){
             throw new RoomDoesNotExistException("Rooms not available for specified dates");
@@ -62,9 +67,11 @@ public class BookingService {
         }
 
         inventoryRepository.saveAll(availableRooms);
-        // TODO : Remove Dummy User
+        // TODO : Remove Dummy User and ADD Global Exception Handler
         User user = new User();
         user.setId(1L);
+        // TODO : Dynamic Pricing Strategy
+
 
         // Create the actual booking
         Booking booking = Booking.builder()
@@ -75,9 +82,50 @@ public class BookingService {
                 .room(room)
                 .user(user)
                 .roomsCount(numberOfRooms).build();
-
+        bookingRepository.save(booking);
         return modelMapper.map(booking, BookingResponseDTO.class);
 
     }
 
+    @Transactional
+    public BookingResponseDTO addGuests(Long bookingId,List<GuestDTO> guestDTOList) {
+
+        //Find the Booking
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
+                new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
+
+         Check if booking has expired or not, and whether the booking is RESERVED or not
+        if(isBookingExpired(booking)){
+            throw new BookingExpiredException("Booking is expired");
+        }
+        if(!booking.getStatus().equals(BookingStatus.RESERVED)){
+            throw new BookingExpiredException("Booking is not RESERVED");
+        }
+        List<Guest> guestList = guestDTOList.stream()
+                .map(guestDTO -> modelMapper.map(guestDTO, Guest.class))
+                .toList();
+        for(Guest guest : guestList){
+            guest.setUser(getCurrentUser());
+        }
+        // Save All guests in a single DB call
+        guestRepository.saveAll(guestList);
+        booking.getGuests().addAll(guestList);
+
+        // Now update booking parameters and save booking
+        booking.setStatus(BookingStatus.GUESTS_ADDED);
+        bookingRepository.save(booking);
+        return modelMapper.map(booking, BookingResponseDTO.class);
+    }
+
+    public boolean isBookingExpired(Booking booking) {
+        return booking.getCheckOutDate().isBefore(LocalDate.now());
+
+    }
+    public User getCurrentUser(){
+        // TODO : Dummy User Logic
+        User user = new User();
+        user.setId(1L);
+        userRepository.save(user);
+        return user;
+    }
 }

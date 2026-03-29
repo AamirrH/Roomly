@@ -65,6 +65,10 @@ public class Booking {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @ManyToMany
+    private List<Guest> guests = new ArrayList<>();
+
     private Integer roomsCount;
+
 
 }

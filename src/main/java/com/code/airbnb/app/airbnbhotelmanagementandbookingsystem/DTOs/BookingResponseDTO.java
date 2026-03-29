@@ -20,9 +20,9 @@ import java.time.LocalDateTime;
 public class BookingResponseDTO {
 
     private Long id;
-    private Hotel hotel;
-    private Room room;
-    private User user;
+    private Long hotelId;
+    private Long roomId;
+    private Long userId;
     private BookingStatus status;
     private LocalDate checkInDate;
     private LocalDate checkoutDate;
