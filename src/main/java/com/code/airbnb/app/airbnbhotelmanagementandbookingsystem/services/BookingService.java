@@ -94,7 +94,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
                 new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
 
-         Check if booking has expired or not, and whether the booking is RESERVED or not
+        // Check if booking has expired or not, and whether the booking is RESERVED or not
         if(isBookingExpired(booking)){
             throw new BookingExpiredException("Booking is expired");
         }
@@ -117,10 +117,42 @@ public class BookingService {
         return modelMapper.map(booking, BookingResponseDTO.class);
     }
 
+    @Transactional
+    public void cancelBooking(Long bookingId){
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
+                new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
+        // Collect all the inventories related to this booking
+        Long hotelId = booking.getHotel().getId();
+        Long roomId = booking.getRoom().getId();
+        LocalDate checkInDate = booking.getCheckInDate();
+        LocalDate checkOutDate = booking.getCheckOutDate();
+        Integer numberOfRooms = booking.getRoomsCount();
+
+        List<Inventory> bookedInventories = inventoryRepository
+                .findBookedInventoriesAndLockThem(hotelId,roomId,checkInDate,checkOutDate);
+
+        // Cancel Logic
+        for(Inventory inventory : bookedInventories){
+            inventory.setBookedCount(inventory.getBookedCount() - numberOfRooms);
+        }
+        // Saving the cancelled Inventories
+        inventoryRepository.saveAll(bookedInventories);
+
+        // Setting booking status to cancelled
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        // TODO : Handle Payment Refund too
+
+    }
+
+    // Helper Method
     public boolean isBookingExpired(Booking booking) {
         return booking.getCheckOutDate().isBefore(LocalDate.now());
 
     }
+
+    // Helper Method
     public User getCurrentUser(){
         // TODO : Dummy User Logic
         User user = new User();
@@ -128,4 +160,19 @@ public class BookingService {
         userRepository.save(user);
         return user;
     }
+
+    public List<BookingResponseDTO> getAllBookings(Long userId){
+        return bookingRepository.findByUser_Id(userId)
+                .stream()
+                .map(bookingDTO -> modelMapper.map(bookingDTO,BookingResponseDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    public BookingResponseDTO getBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
+                new BookingNotFoundException("Booking with the booking id "+bookingId+" not found"));
+        return modelMapper.map(booking, BookingResponseDTO.class);
+    }
+
+
 }
