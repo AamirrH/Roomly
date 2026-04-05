@@ -18,6 +18,7 @@ class AirBnbHotelManagementAndBookingSystemApplicationTests {
     static void main() {
         System.out.println(LocalDate.now());
     }
+    // Holiday API Test
     @Test
     void testHolidayAPI() {
         List<HolidayResponseDTO> holidays = holidayAPIService.getHolidays(2026, "US");
