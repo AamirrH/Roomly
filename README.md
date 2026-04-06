@@ -131,8 +131,9 @@ roomly/
 ├── repository/
 ├── entities/
 ├── strategies/
-│   ├── pricing/
-│   └── decorators/
+├── DTOs/
+├── advices/
+├── exceptions/
 ├── config/
 └── utils/
 ```
