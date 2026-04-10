@@ -135,7 +135,6 @@ roomly/
 ├── advices/
 ├── exceptions/
 ├── config/
-└── utils/
 ```
 
 ---
