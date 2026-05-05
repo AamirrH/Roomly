@@ -11,7 +11,7 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
 
-    @Value("${google.calender.api}")
+    @Value("${google.calender.holiday.base.url}")
     private String BASE_URL;
 
 
