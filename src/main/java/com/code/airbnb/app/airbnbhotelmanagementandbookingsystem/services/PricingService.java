@@ -12,10 +12,9 @@ import java.math.BigDecimal;
 public class PricingService {
 
     private final HolidayAPIService holidayAPIService;
-    private PricingStrategy pricingStrategy;
 
     public BigDecimal calculateFinalPrice(Inventory inventory){
-        pricingStrategy = new BasePricingStrategy();
+        PricingStrategy pricingStrategy = new BasePricingStrategy();
         pricingStrategy = new SurgePricingStrategy(pricingStrategy);
         pricingStrategy = new OccupanyPricingStrategy(pricingStrategy);
         pricingStrategy = new UrgencyPricingStrategy(pricingStrategy);

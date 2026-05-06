@@ -62,6 +62,13 @@ public class BookingService {
             throw new RoomDoesNotExistException("Rooms not available for specified dates");
         }
 
+        // Dynamic Pricing Strategy
+        BigDecimal finalStrategicPrice = BigDecimal.ZERO;
+        for(Inventory inventory : availableRooms) {
+            finalStrategicPrice = finalStrategicPrice.add(pricingService.calculateFinalPrice(inventory));
+        }
+        finalStrategicPrice = finalStrategicPrice.multiply(BigDecimal.valueOf(numberOfRooms));
+
         // Reserve the rooms
         for(Inventory inventory : availableRooms){
             // Update Booking Count
@@ -72,12 +79,6 @@ public class BookingService {
         // TODO : Remove Dummy User and ADD Global Exception Handler
         User user = new User();
         user.setId(1L);
-        // Dynamic Pricing Strategy
-        BigDecimal finalStrategicPrice = BigDecimal.ZERO;
-        for(Inventory inventory : availableRooms) {
-            finalStrategicPrice = finalStrategicPrice.add(pricingService.calculateFinalPrice(inventory));
-        }
-        finalStrategicPrice = finalStrategicPrice.multiply(BigDecimal.valueOf(numberOfRooms));
 
         // Create the actual booking
         Booking booking = Booking.builder()
