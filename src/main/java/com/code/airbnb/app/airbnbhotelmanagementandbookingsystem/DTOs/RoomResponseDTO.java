@@ -23,6 +23,10 @@ public class RoomResponseDTO {
 
     private BigDecimal basePrice;
 
+    private BigDecimal estimatedTotalPrice;
+
+    private BigDecimal estimatedAverageNightlyPrice;
+
     private List<String> amenities = new ArrayList<>();
 
     private List<String> photos = new ArrayList<>();
