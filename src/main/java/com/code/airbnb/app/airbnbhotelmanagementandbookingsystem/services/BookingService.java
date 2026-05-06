@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final InventoryService inventoryService;
+    private final PricingService pricingService;
     private final HotelRepository hotelRepository;
     private final InventoryRepository inventoryRepository;
     private final RoomRepository roomRepository;
@@ -70,8 +72,12 @@ public class BookingService {
         // TODO : Remove Dummy User and ADD Global Exception Handler
         User user = new User();
         user.setId(1L);
-        // TODO : Dynamic Pricing Strategy
-
+        // Dynamic Pricing Strategy
+        BigDecimal finalStrategicPrice = BigDecimal.ZERO;
+        for(Inventory inventory : availableRooms) {
+            finalStrategicPrice = finalStrategicPrice.add(pricingService.calculateFinalPrice(inventory));
+        }
+        finalStrategicPrice = finalStrategicPrice.multiply(BigDecimal.valueOf(numberOfRooms));
 
         // Create the actual booking
         Booking booking = Booking.builder()
@@ -81,6 +87,7 @@ public class BookingService {
                 .hotel(hotel)
                 .room(room)
                 .user(user)
+                .finalCalculatedPrice(finalStrategicPrice)
                 .roomsCount(numberOfRooms).build();
         bookingRepository.save(booking);
         return modelMapper.map(booking, BookingResponseDTO.class);

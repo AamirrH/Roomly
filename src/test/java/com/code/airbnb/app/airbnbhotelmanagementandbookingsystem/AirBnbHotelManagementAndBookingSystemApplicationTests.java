@@ -44,6 +44,7 @@ class AirBnbHotelManagementAndBookingSystemApplicationTests {
     @Test
     void testPricingStrategy(){
 
+
     }
 
 
