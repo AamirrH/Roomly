@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 
-// If Occupancy is above a certain level, increase prices bookedCount/totalCount
+// If Occupancy is above a certain level, increase prices. Occupancy = bookedCount/totalCount
 @RequiredArgsConstructor
 public class OccupanyPricingStrategy implements PricingStrategy{
 
