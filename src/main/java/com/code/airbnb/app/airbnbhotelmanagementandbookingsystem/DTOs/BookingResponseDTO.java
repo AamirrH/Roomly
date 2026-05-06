@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -28,5 +29,6 @@ public class BookingResponseDTO {
     private LocalDate checkoutDate;
     private String city;
     private Integer numberOfRooms;
+    private BigDecimal finalCalculatedPrice;
 
 }
