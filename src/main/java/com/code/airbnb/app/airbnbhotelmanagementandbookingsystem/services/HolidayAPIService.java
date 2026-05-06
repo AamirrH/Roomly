@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,26 @@ public class HolidayAPIService {
 
     @Value("${google.calender.holiday.base.calender.id}")
     private String calendarId;
+
+    private final Map<Integer, List<CalenderItemsDTO>> holidayCacheByYear = new ConcurrentHashMap<>();
+
+    public boolean isPublicHoliday(LocalDate date) {
+        List<CalenderItemsDTO> holidays = holidayCacheByYear.computeIfAbsent(
+                date.getYear(),
+                this::getHolidaysForYear
+        );
+
+        return holidays.stream()
+                .anyMatch(holiday -> holiday.getStart() != null
+                        && holiday.getStart().getDate() != null
+                        && holiday.getStart().getDate().equals(date));
+    }
+
+    private List<CalenderItemsDTO> getHolidaysForYear(Integer year) {
+        String timeMin = year + "-01-01T00:00:00Z";
+        String timeMax = year + "-12-31T23:59:59Z";
+        return getHolidays(timeMin, timeMax);
+    }
 
     public List<CalenderItemsDTO> getHolidays(String timeMin, String timeMax) {
         String publicHolidayCalendarId = region + "#" + calendarId;
