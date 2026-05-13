@@ -19,14 +19,22 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
+    private final String [] publicRoutes = {"/roomly/api/v1/login","/roomly/api/v1/logout","/roomly/api/v1/signup"};
+
+
     @Bean
     // TODO : Request Matchers will be added at the last
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.
                 authorizeHttpRequests(authRequest ->
                         authRequest
+                                .requestMatchers(publicRoutes).permitAll()
                                 .anyRequest()
-                                .authenticated());
+                                .authenticated())
+                .csrf(csrfConfigurer ->  csrfConfigurer.disable())
+                .formLogin(formLoginConfigurer -> formLoginConfigurer.disable());
+
+
 
 
 

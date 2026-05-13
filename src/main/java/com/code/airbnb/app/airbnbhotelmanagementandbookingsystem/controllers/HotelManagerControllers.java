@@ -25,7 +25,7 @@ public class HotelManagerControllers {
     private final RoomService roomService;
 
 
-    @GetMapping("/hotels")
+    @GetMapping("/roomly/hotels")
     private ResponseEntity<List<HotelResponseDTO>> findAll() {
         return ResponseEntity.ok(hotelService.findAll());
     }

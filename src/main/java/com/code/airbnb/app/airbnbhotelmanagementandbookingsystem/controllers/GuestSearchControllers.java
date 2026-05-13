@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/hotels")
+@RequestMapping("/roomly/api/v1/hotels")
 @RequiredArgsConstructor
 public class GuestSearchControllers {
 
