@@ -1,13 +1,17 @@
-package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities;
+package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security;
 
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Booking;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Guest;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -15,15 +19,14 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String username;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -31,27 +34,30 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    /**
-     * Stores the list of roles as a collection of enum strings in a separate join table.
-     */
+
+     // Stores the list of roles as a collection of enum strings in a separate join table.
+
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    @Builder.Default
-    private List<Role> roles = new ArrayList<>();
+    private List<Role> roles;
 
     // Bidirectional: one user can have many bookings
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Booking> bookings = new ArrayList<>();
+    private List<Booking> bookings;
 
     // Bidirectional: one user can have many guests
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Guest> guests = new ArrayList<>();
+    private List<Guest> guests;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
 
 }
