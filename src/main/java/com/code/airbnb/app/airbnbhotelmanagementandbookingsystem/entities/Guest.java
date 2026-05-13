@@ -1,6 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.Gender;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

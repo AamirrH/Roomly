@@ -1,4 +1,4 @@
-package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security;
+package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Booking;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Guest;
@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "users")
@@ -39,7 +38,6 @@ public class User implements UserDetails {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
     private List<Role> roles;
 
     // Bidirectional: one user can have many bookings

@@ -1,19 +1,11 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs;
 
 
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.User;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

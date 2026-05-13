@@ -1,16 +1,10 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs;
 
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.User;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

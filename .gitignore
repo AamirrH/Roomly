@@ -29,6 +29,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+## Frontend workspace
+frontend/
+
 ### VS Code ###
 .vscode/
 
