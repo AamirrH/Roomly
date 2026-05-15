@@ -2,7 +2,9 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.servi
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.LoginDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.LoginResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.NoPermissionException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,9 +29,11 @@ public class LoginService {
 
         // cast the auth object into an actual user object
         User user = (User) auth.getPrincipal();
-
         if(user == null){
             throw new UserNotFoundException("User not found");
+        }
+        if(!(user.getRoles().contains(Role.USER))){
+            throw new NoPermissionException("You do not have permission to perform this operation");
         }
         // Generate Tokens
         String accessToken = jwtService.generateJWTAccessToken(user);
@@ -43,8 +47,8 @@ public class LoginService {
         // First verify the refreshToken
         Long id = jwtService.getUserIDFromJWTToken(refreshToken);
         User user = userService.getUserById(id);
-        if( user == null){
-            throw new UserNotFoundException("User not found");
+        if(!(user.getRoles().contains(Role.USER))){
+            throw new NoPermissionException("You do not have permission to perform this operation");
         }
         // Create a new Access Token
         String newAccessToken = jwtService.generateJWTAccessToken(user);

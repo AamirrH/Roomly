@@ -3,9 +3,11 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.utlis
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Permissions;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role;
 import lombok.experimental.UtilityClass;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Permissions.*;
 import static com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role.*;
@@ -57,8 +59,11 @@ public class PermissionMapping {
             ROOMLY_ADMIN, Set.of(Permissions.values())
     );
 
-    public static Set<Permissions> getPermissionsForRole(Role role) {
-        return ROLE_PERMISSION_MAP.getOrDefault(role, Set.of());
-    }
+    public static Set<SimpleGrantedAuthority> getAuthoritiesForRole(Role roles) {
+        return ROLE_PERMISSION_MAP.get(roles).stream()
+                .map(permissions -> new SimpleGrantedAuthority((permissions.name())))
+                .collect(Collectors.toSet());
 
+    }
 }
+

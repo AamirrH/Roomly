@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,11 +33,13 @@ public class UserControllers {
     private final LoginService loginService;
 
 
+    @Secured("ROLE_USER")
     @PostMapping("/signup")
     public ResponseEntity<SignupResponseDTO> signup(@RequestBody SignupDTO signupDTO) {
         return ResponseEntity.ok(userService.signup(signupDTO));
     }
 
+    @Secured("ROLE_USER")
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO, HttpServletResponse response) {
 

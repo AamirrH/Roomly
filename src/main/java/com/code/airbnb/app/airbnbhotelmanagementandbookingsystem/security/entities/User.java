@@ -2,14 +2,15 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entit
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Booking;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Guest;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.utlis.PermissionMapping;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -18,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,11 +35,11 @@ public class User implements UserDetails {
     private String password;
 
 
-     // Stores the list of roles as a collection of enum strings in a separate join table.
 
+     // Stores the list of roles as a collection of enum strings in a separate join table.
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private List<Role> roles;
+    private Set<Role> roles;
 
     // Bidirectional: one user can have many bookings
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -49,7 +51,13 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        this.roles.forEach(role -> {
+            Set<SimpleGrantedAuthority> roleAuthorities = PermissionMapping
+                    .getAuthoritiesForRole(role);
+            authorities.addAll(roleAuthorities);
+        });
+        return authorities;
     }
 
     @Override

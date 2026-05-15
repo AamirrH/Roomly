@@ -2,6 +2,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.servi
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.SignupDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.SignupResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserAlreadyExistsException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
@@ -14,6 +15,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +56,7 @@ public class UserService implements UserDetailsService {
             user.setUsername(signupDTO.getUsername());
             user.setEmail(signupDTO.getEmail());
             user.setPassword(bCryptPasswordEncoder.encode(signupDTO.getPassword()));
-            // TODO : Add Roles
+            user.setRoles(Set.of(Role.USER));
             // Save the user.
             userRepository.save(user);
             return modelMapper.map(user, SignupResponseDTO.class);
