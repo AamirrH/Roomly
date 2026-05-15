@@ -2,7 +2,6 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entit
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Booking;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Guest;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.*;
