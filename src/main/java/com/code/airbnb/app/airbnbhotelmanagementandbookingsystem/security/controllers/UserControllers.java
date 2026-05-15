@@ -10,6 +10,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.servic
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.LoginService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.UserService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,22 @@ public class UserControllers {
        cookie.setHttpOnly(true);
        response.addCookie(cookie);
        return ResponseEntity.ok(loginResponseDTO);
+
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponseDTO> refresh (HttpServletRequest request) {
+        String RefreshToken = "";
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("RefreshToken")) {
+                RefreshToken = cookie.getValue();
+                break;
+            }
+        }
+        LoginResponseDTO loginResponseDTO = loginService.refreshToken(RefreshToken);
+        return ResponseEntity.ok(loginResponseDTO);
+
 
     }
 

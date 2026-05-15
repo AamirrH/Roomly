@@ -17,6 +17,7 @@ public class LoginService {
 
     private final AuthenticationManager authenticationManager;
     private final JWTService jwtService;
+    private final UserService userService;
 
     public LoginResponseDTO login(LoginDTO loginDTO) {
         // Authenticate the user first.
@@ -35,6 +36,19 @@ public class LoginService {
         String refreshToken = jwtService.generateJWTRefreshToken(user);
 
         return new LoginResponseDTO(accessToken, refreshToken);
+
+    }
+
+    public LoginResponseDTO refreshToken(String refreshToken) {
+        // First verify the refreshToken
+        Long id = jwtService.getUserIDFromJWTToken(refreshToken);
+        User user = userService.getUserById(id);
+        if( user == null){
+            throw new UserNotFoundException("User not found");
+        }
+        // Create a new Access Token
+        String newAccessToken = jwtService.generateJWTAccessToken(user);
+        return new LoginResponseDTO(newAccessToken,refreshToken);
 
     }
 

@@ -1,5 +1,6 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.configuration;
 
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.filters.JWTAuthFilter;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
@@ -12,9 +13,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -27,6 +30,8 @@ import java.util.List;
 @EnableMethodSecurity(securedEnabled = true)
 @RequiredArgsConstructor
 public class WebSecurityConfig {
+
+    private final JWTAuthFilter jwtAuthFilter;
 
     private final String[] publicRoutes = {
             "/roomly/api/v1/login",
@@ -41,7 +46,6 @@ public class WebSecurityConfig {
 
 
     @Bean
-    // TODO : Request Matchers will be added at the last
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authRequest ->
@@ -51,13 +55,8 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated())
                 .csrf(csrfConfigurer ->  csrfConfigurer.disable())
                 .formLogin(formLoginConfigurer -> formLoginConfigurer.disable())
-                .cors(cors -> {});
-
-
-
-
-
-
+                .cors(cors -> {})
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
