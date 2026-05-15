@@ -10,6 +10,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.Book
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

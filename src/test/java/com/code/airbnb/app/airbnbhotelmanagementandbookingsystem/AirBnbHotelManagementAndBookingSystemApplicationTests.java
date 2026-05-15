@@ -2,9 +2,12 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HolidayAPI.CalenderItemsDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HolidayAPIService;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.util.List;
 
@@ -16,6 +19,9 @@ class AirBnbHotelManagementAndBookingSystemApplicationTests {
 
     @Autowired
     private HolidayAPIService holidayAPIService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     // Holiday API Test
     @Test
@@ -40,6 +46,8 @@ class AirBnbHotelManagementAndBookingSystemApplicationTests {
 
 
 
+
+
     // Pricing Strategy Test
     @Test
     void testPricingStrategy(){
@@ -47,6 +55,13 @@ class AirBnbHotelManagementAndBookingSystemApplicationTests {
 
     }
 
+
+    @Test
+    void checkAuthentication(){
+        System.out.println(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken("Dummy User","password")).toString());
+
+
+    }
 
 
 

@@ -70,7 +70,7 @@ public class Booking {
     private LocalDateTime updatedAt;
 
     @ManyToMany
-    private List<Guest> guests = new ArrayList<>();
+    private List<Guest> guests;
 
     private Integer roomsCount;
 

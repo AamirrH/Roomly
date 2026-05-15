@@ -54,8 +54,7 @@ public class Hotel {
             joinColumns = @JoinColumn(name = "hotel_id")
     )
     @Column(name = "amenity")
-    @Builder.Default
-    private List<String> amenities = new ArrayList<>();
+    private List<String> amenities;
 
     @Column(nullable = false)
     @Builder.Default
@@ -71,16 +70,14 @@ public class Hotel {
 
     // One hotel has many rooms
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Room> rooms = new ArrayList<>();
+    private List<Room> rooms;
 
     // One hotel has many bookings
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Booking> bookings = new ArrayList<>();
+
+    private List<Booking> bookings;
 
     // One hotel has many inventory records
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Inventory> inventories = new ArrayList<>();
+    private List<Inventory> inventories;
 }

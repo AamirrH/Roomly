@@ -50,8 +50,7 @@ public class Room {
             joinColumns = @JoinColumn(name = "room_id")
     )
     @Column(name = "amenity")
-    @Builder.Default
-    private List<String> amenities = new ArrayList<>();
+    private List<String> amenities;
 
     @ElementCollection
     @CollectionTable(
@@ -59,8 +58,7 @@ public class Room {
             joinColumns = @JoinColumn(name = "room_id")
     )
     @Column(name = "photo_url", columnDefinition = "TEXT")
-    @Builder.Default
-    private List<String> photos = new ArrayList<>();
+    private List<String> photos;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -72,11 +70,9 @@ public class Room {
 
     // One room can have many bookings
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Booking> bookings = new ArrayList<>();
+    private List<Booking> bookings;
 
     // One room can have many inventory records
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Inventory> inventories = new ArrayList<>();
+    private List<Inventory> inventories;
 }

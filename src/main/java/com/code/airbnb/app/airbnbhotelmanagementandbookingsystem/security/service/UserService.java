@@ -24,10 +24,11 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
 
 
+    // Use Email since we are using it as unique identifier to signup, login
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException
-                ("User with Username "+username+" not found."));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException
+                ("User with email "+email+" not found."));
         return user;
 
     }
@@ -43,17 +44,18 @@ public class UserService implements UserDetailsService {
 
     public SignupResponseDTO signup(SignupDTO signupDTO) throws UserAlreadyExistsException {
         // We use email since it is unique.
-        if(userRepository.findByUsername(signupDTO.getUsername()).isPresent()) {
-            throw new UserAlreadyExistsException("User with Username "+signupDTO.getUsername()+" already exists.");
+        if(userRepository.existsByEmail(signupDTO.getEmail())) {
+            throw new UserAlreadyExistsException("User already exists.");
         }
             // If the user does not exist, create a new user.
             User user = new User();
             user.setUsername(signupDTO.getUsername());
             user.setEmail(signupDTO.getEmail());
             user.setPassword(bCryptPasswordEncoder.encode(signupDTO.getPassword()));
+            // TODO : Add Roles
             // Save the user.
             userRepository.save(user);
-            return modelMapper.map(signupDTO, SignupResponseDTO.class);
+            return modelMapper.map(user, SignupResponseDTO.class);
     }
 
 
