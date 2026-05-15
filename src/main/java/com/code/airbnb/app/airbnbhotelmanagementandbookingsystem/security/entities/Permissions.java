@@ -18,6 +18,7 @@ public enum Permissions {
     BOOKING_CREATE,
     BOOKING_DELETE,
     BOOKING_UPDATE,
+    BOOKING_CANCEL,
 
     // Inventory Permissions
     INVENTORY_UPDATE,
