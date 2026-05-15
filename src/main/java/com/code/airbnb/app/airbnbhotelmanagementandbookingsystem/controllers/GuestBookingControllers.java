@@ -6,6 +6,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.GuestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,30 +20,35 @@ public class GuestBookingControllers {
 
     // View all bookings of a specific user
     // TODO : Remove {userId} PathVariable during Auth
+    @PreAuthorize("hasAuthority('BOOKING_VIEW')")
     @GetMapping("/bookings/{userId}")
     private ResponseEntity<List<BookingResponseDTO>> getAllBookings(@PathVariable Long userId) {
         return ResponseEntity.ok(bookingService.getAllBookings(userId));
     }
 
     // View details of a specific booking
+    @PreAuthorize("hasAuthority('BOOKING_VIEW')")
     @GetMapping("/booking/{bookingId}")
     private ResponseEntity<BookingResponseDTO> getBooking(@PathVariable Long bookingId) {
         return ResponseEntity.ok(bookingService.getBooking(bookingId));
     }
 
     // Create A Booking
+    @PreAuthorize("hasAuthority('BOOKING_CREATE')")
     @PostMapping("/bookings")
     private ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingRequestDTO bookingRequestDTO) {
         return ResponseEntity.ok(bookingService.createBooking(bookingRequestDTO));
     }
 
-    // Add Guests to a existing booking
-    @PostMapping("/bookings/{bookingId}/guests")
+    // Add Guests to an existing booking
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    @PatchMapping("/bookings/{bookingId}/guests")
     private ResponseEntity<BookingResponseDTO> addGuests(@PathVariable Long bookingId, @RequestBody List<GuestDTO> guestDTOList){
         return ResponseEntity.ok(bookingService.addGuests(bookingId,guestDTOList));
     }
 
     // Cancel A Booking
+    @PreAuthorize("hasAuthority('BOOKING_CANCEL')")
     @PatchMapping("bookings/{bookingId}/cancel")
     private ResponseEntity<String> cancelBooking(@PathVariable Long bookingId) {
         bookingService.cancelBooking(bookingId);

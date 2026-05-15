@@ -60,7 +60,7 @@ public class PermissionMapping {
     );
 
     public static Set<SimpleGrantedAuthority> getAuthoritiesForRole(Role roles) {
-        return ROLE_PERMISSION_MAP.get(roles).stream()
+        return ROLE_PERMISSION_MAP.getOrDefault(roles, Set.of()).stream()
                 .map(permissions -> new SimpleGrantedAuthority((permissions.name())))
                 .collect(Collectors.toSet());
 

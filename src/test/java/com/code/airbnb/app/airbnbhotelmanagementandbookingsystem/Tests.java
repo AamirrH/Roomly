@@ -10,7 +10,11 @@ public class Tests {
 
 
     @Test
-    void testNumber(){
+    void testTokenSplit(){
+        String token = "Bearer dfmsdgfdgjks.463tegjnmewogjfndjfio.sj30reghrdfthyhdxrhgfjxr5r67s4tgy9tavl";
+        String splitToken = token.split("Bearer ")[1];
+        Assertions.assertEquals("dfmsdgfdgjks.463tegjnmewogjfndjfio.sj30reghrdfthyhdxrhgfjxr5r67s4tgy9tavl",splitToken);
+
 
 
 

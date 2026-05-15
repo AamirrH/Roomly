@@ -5,8 +5,6 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.L
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.LoginResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.SignupDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.SignupResponseDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.JWTService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.LoginService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.UserService;
 import jakarta.servlet.http.Cookie;
@@ -14,11 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.web.header.Header;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,13 +26,13 @@ public class UserControllers {
     private final LoginService loginService;
 
 
-    @Secured("ROLE_USER")
+
     @PostMapping("/signup")
     public ResponseEntity<SignupResponseDTO> signup(@RequestBody SignupDTO signupDTO) {
         return ResponseEntity.ok(userService.signup(signupDTO));
     }
 
-    @Secured("ROLE_USER")
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO, HttpServletResponse response) {
 
