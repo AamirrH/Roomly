@@ -9,9 +9,6 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@RequiredArgsConstructor
 @Builder
 public class ManagerBookingResponseDTO {
     private Long id;

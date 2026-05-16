@@ -17,6 +17,10 @@ import java.util.List;
 @Builder
 public class HotelRequestDTO {
 
+    @NotBlank(message = "Hotel name is required")
+    @Size(min = 2, max = 100, message = "Hotel name must be between 2 and 100 characters")
+    private String hotelName;
+
     @NotBlank(message = "City is required")
     @Size(min = 2, max = 100, message = "City must be between 2 and 100 characters")
     private String city;

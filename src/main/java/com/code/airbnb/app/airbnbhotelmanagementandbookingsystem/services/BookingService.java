@@ -2,6 +2,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingRequestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingReportDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.GuestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.ManagerBookingResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.*;
@@ -210,6 +211,24 @@ public class BookingService {
                         .createdAt(booking.getCreatedAt())
                         .build())
                 .toList();
+    }
+
+    public BookingReportDTO generateBookingReport(LocalDate startDate, LocalDate endDate) {
+        List<Booking> bookings = bookingRepository.findBookingsForReport(startDate, endDate);
+
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        for (Booking booking : bookings) {
+            if (booking.getFinalCalculatedPrice() != null) {
+                totalRevenue = totalRevenue.add(booking.getFinalCalculatedPrice());
+            }
+        }
+
+        return BookingReportDTO.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .totalBookings((long) bookings.size())
+                .totalRevenue(totalRevenue)
+                .build();
     }
 
 }

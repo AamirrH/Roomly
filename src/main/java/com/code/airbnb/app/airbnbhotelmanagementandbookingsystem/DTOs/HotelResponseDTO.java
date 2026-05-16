@@ -18,7 +18,11 @@ public class HotelResponseDTO {
 
     private Long id;
 
+    private String hotelName;
+
     private String city;
+
+    private ContactInfoDTO contactInfo;
 
     private List<String> photos = new ArrayList<>();
 

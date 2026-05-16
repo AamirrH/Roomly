@@ -2,6 +2,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelRequestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.ContactInfo;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.InventoryRepository;
@@ -65,6 +66,23 @@ public class HotelService {
     public ResponseEntity<HotelResponseDTO> updateHotelByHotelId(Long id, Map<String,Object> updates) {
         Hotel hotel = hotelRepository.findHotelById(id);
         updates.forEach((key, value) -> {
+            if ("contactInfo".equals(key) && value instanceof Map<?, ?> contactInfoUpdates) {
+                ContactInfo contactInfo = hotel.getContactInfo();
+                if (contactInfo == null) {
+                    contactInfo = new ContactInfo();
+                    contactInfo.setHotel(hotel);
+                    hotel.setContactInfo(contactInfo);
+                }
+                ContactInfo finalContactInfo = contactInfo;
+                contactInfoUpdates.forEach((contactKey, contactValue) -> {
+                    Field contactField = ReflectionUtils.findField(ContactInfo.class, String.valueOf(contactKey));
+                    if(contactField != null) {
+                        ReflectionUtils.makeAccessible(contactField);
+                        ReflectionUtils.setField(contactField, finalContactInfo, contactValue);
+                    }
+                });
+                return;
+            }
             // Find Required Field in Hotel.Class with same value as key and put it in a reference variable
             Field field = ReflectionUtils.findField(Hotel.class, key);
             if(field != null) {

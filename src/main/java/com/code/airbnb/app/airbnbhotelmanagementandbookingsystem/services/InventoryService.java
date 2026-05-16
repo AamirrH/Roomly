@@ -1,10 +1,11 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.HotelResponseDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.RoomResponseDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Inventory;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.InventoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,22 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
     private final PricingService pricingService;
+
+    @Transactional
+    public InventoryResponseDTO updateInventory(Long hotelId, Long roomId, LocalDate date, InventoryPatchDTO inventoryPatchDTO) {
+        Inventory inventory = inventoryRepository.findByHotel_IdAndRoom_IdAndDate(hotelId, roomId, date)
+                .orElseThrow(() -> new RoomDoesNotExistException("Inventory does not exist for hotel " + hotelId + ", room " + roomId + " on " + date));
+
+        ModelMapper patchMapper = new ModelMapper();
+        patchMapper.getConfiguration().setSkipNullEnabled(true);
+        patchMapper.map(inventoryPatchDTO, inventory);
+
+        if (inventory.getBookedCount() > inventory.getTotalCount()) {
+            throw new IllegalArgumentException("Booked count cannot be greater than total count");
+        }
+
+        return mapInventory(inventoryRepository.save(inventory));
+    }
 
     public void initialiseRoomForAYear(Room room){
         LocalDate dateToday = LocalDate.now();
@@ -109,5 +126,18 @@ public class InventoryService {
                 .ifPresent(hotelResponseDTO::setEstimatedStartingPrice);
 
         return hotelResponseDTO;
+    }
+
+    private InventoryResponseDTO mapInventory(Inventory inventory) {
+        return InventoryResponseDTO.builder()
+                .id(inventory.getId())
+                .hotelId(inventory.getHotel().getId())
+                .roomId(inventory.getRoom().getId())
+                .date(inventory.getDate())
+                .bookedCount(inventory.getBookedCount())
+                .totalCount(inventory.getTotalCount())
+                .surgeFactor(inventory.getSurgeFactor())
+                .closed(inventory.getClosed())
+                .build();
     }
 }

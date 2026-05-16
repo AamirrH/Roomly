@@ -15,12 +15,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface InventoryRepository extends JpaRepository<Inventory, Integer> {
+public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
 
     void deleteByRoom_IdAndHotel_Id(Long roomId, Long hotelId);
+
+    Optional<Inventory> findByHotel_IdAndRoom_IdAndDate(Long hotelId, Long roomId, LocalDate date);
 
     @Query(value = """
        SELECT DISTINCT i.hotel FROM Inventory i

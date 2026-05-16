@@ -8,6 +8,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.BookingService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HotelService;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.InventoryService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.RoomService;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -22,13 +23,14 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping({"/api/v1/admin", "/api/v1/admins"})
 @RequiredArgsConstructor
 public class HotelManagerControllers {
 
     private final HotelService hotelService;
     private final RoomService roomService;
     private final BookingService bookingService;
+    private final InventoryService inventoryService;
 
 
     @PreAuthorize("hasAuthority('HOTEL_VIEW')")
@@ -104,12 +106,28 @@ public class HotelManagerControllers {
 
     @PreAuthorize("hasAnyRole('HOTEL_MANAGER','HOTEL_ADMIN','ROOMLY_ADMIN')")
     @GetMapping("/bookings")
-    private ResponseEntity<List<ManagerBookingResponseDTO>> getBookings(@RequestParam(required = false) Long hotelId,
+    private ResponseEntity<List<ManagerBookingResponseDTO>> getBookings(@RequestParam(required = true) Long hotelId,
                                          @RequestParam(required = false)LocalDate startDate,
                                          @RequestParam(required = false) LocalDate endDate,
                                          @RequestParam(required = false)BookingStatus finalStatus
                                          ){
         return ResponseEntity.ok(bookingService.getBookingsForHotelManager(hotelId,startDate,endDate,finalStatus));
+    }
+
+    @PreAuthorize("hasAnyRole('HOTEL_MANAGER','HOTEL_ADMIN','ROOMLY_ADMIN')")
+    @PostMapping("/reports")
+    private ResponseEntity<BookingReportDTO> generateReport(@RequestParam(required = false) LocalDate startDate,
+                                                            @RequestParam(required = false) LocalDate endDate) {
+        return ResponseEntity.ok(bookingService.generateBookingReport(startDate, endDate));
+    }
+
+    @PreAuthorize("hasAnyRole('HOTEL_MANAGER','HOTEL_ADMIN','ROOMLY_ADMIN')")
+    @PatchMapping("/inventory/{hotelId}/{roomId}/{date}")
+    private ResponseEntity<InventoryResponseDTO> updateInventory(@PathVariable Long hotelId,
+                                                                 @PathVariable Long roomId,
+                                                                 @PathVariable LocalDate date,
+                                                                 @RequestBody InventoryPatchDTO inventoryPatchDTO) {
+        return ResponseEntity.ok(inventoryService.updateInventory(hotelId, roomId, date, inventoryPatchDTO));
     }
 
 
