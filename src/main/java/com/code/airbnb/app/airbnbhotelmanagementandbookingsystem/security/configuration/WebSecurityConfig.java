@@ -33,6 +33,7 @@ public class WebSecurityConfig {
             "/roomly/api/v1/logout",
             "/roomly/api/v1/signup",
             "/roomly/api/v1/refresh",
+            "/roomly/api/v1/hotels/**",
     };
     
     @Bean

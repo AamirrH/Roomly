@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.print.Book;
@@ -30,7 +29,6 @@ public class GuestSearchControllers {
     private final RoomService roomService;
     private final BookingService bookingService;
 
-    @PreAuthorize("hasAuthority('HOTEL_VIEW')")
     @GetMapping("/search")
     private ResponseEntity<Page<HotelResponseDTO>> searchHotels(@RequestParam(required = false) String city,
                                                                 @RequestParam(required = false) LocalDate checkInDate,
@@ -43,7 +41,6 @@ public class GuestSearchControllers {
     }
 
     // Search a specific hotel with given parameters
-    @PreAuthorize("hasAuthority('HOTEL_VIEW')")
     @GetMapping("/{hotelId}")
     private ResponseEntity<List<RoomResponseDTO>> getHotels(@RequestParam(required = false) LocalDate checkInDate,
                                                             @RequestParam(required = false) LocalDate checkOutDate,
@@ -54,7 +51,6 @@ public class GuestSearchControllers {
     }
 
     // Get All Static Details of a Specific Room of a Specific Hotel
-    @PreAuthorize("hasAuthority('ROOM_VIEW')")
     @GetMapping("/{hotelId}/rooms/{roomId}")
     private ResponseEntity<RoomResponseDTO> getGuestRoomDetails(@PathVariable Long hotelId, @PathVariable Long roomId){
         return ResponseEntity.ok(roomService.getRoomById(roomId,hotelId));

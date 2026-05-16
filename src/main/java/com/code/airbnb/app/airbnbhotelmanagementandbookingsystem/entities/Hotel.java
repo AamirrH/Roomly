@@ -25,6 +25,9 @@ public class Hotel {
     @Column(nullable = false)
     private String city;
 
+    @Column(nullable = false)
+    private String hotelName;
+
     /**
      * One hotel has exactly one ContactInfo.
      * Hotel owns the FK column contact_info_id.

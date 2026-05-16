@@ -3,6 +3,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingRequestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.GuestDTO;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.ManagerBookingResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.BookingExpiredException;
@@ -14,11 +15,14 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.reposi
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -180,5 +184,32 @@ public class BookingService {
         return modelMapper.map(booking, BookingResponseDTO.class);
     }
 
+
+    @Transactional
+    public List<ManagerBookingResponseDTO> getBookingsForHotelManager(
+            Long hotelId,
+            LocalDate startDate,
+            LocalDate endDate,
+            BookingStatus finalStatus
+    ) {
+        return bookingRepository.getBookingsForHotelManager(hotelId, startDate, endDate, finalStatus)
+                .stream()
+                .map(booking -> ManagerBookingResponseDTO.builder()
+                        .id(booking.getId())
+                        .hotelId(booking.getHotel().getId())
+                        .hotelName(booking.getHotel().getHotelName())
+                        .roomId(booking.getRoom().getId())
+                        .roomType(booking.getRoom().getType())
+                        .userId(booking.getUser().getId())
+                        .guestEmail(booking.getUser().getEmail())
+                        .status(booking.getStatus())
+                        .checkInDate(booking.getCheckInDate())
+                        .checkOutDate(booking.getCheckOutDate())
+                        .roomsCount(booking.getRoomsCount())
+                        .finalCalculatedPrice(booking.getFinalCalculatedPrice())
+                        .createdAt(booking.getCreatedAt())
+                        .build())
+                .toList();
+    }
 
 }

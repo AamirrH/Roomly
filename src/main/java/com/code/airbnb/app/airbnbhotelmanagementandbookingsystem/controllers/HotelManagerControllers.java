@@ -4,7 +4,9 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.controllers;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.HotelRepository;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.BookingService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.HotelService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.RoomService;
 import jakarta.validation.Valid;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +28,7 @@ public class HotelManagerControllers {
 
     private final HotelService hotelService;
     private final RoomService roomService;
+    private final BookingService bookingService;
 
 
     @PreAuthorize("hasAuthority('HOTEL_VIEW')")
@@ -96,6 +100,16 @@ public class HotelManagerControllers {
     private void deleteRoom(@PathVariable Long hotelId, @PathVariable Long roomId){
         roomService.deleteRoom(roomId, hotelId);
         ResponseEntity.ok("Room Successfully deleted!");
+    }
+
+    @PreAuthorize("hasAnyRole('HOTEL_MANAGER','HOTEL_ADMIN','ROOMLY_ADMIN')")
+    @GetMapping("/bookings")
+    private ResponseEntity<List<ManagerBookingResponseDTO>> getBookings(@RequestParam(required = false) Long hotelId,
+                                         @RequestParam(required = false)LocalDate startDate,
+                                         @RequestParam(required = false) LocalDate endDate,
+                                         @RequestParam(required = false)BookingStatus finalStatus
+                                         ){
+        return ResponseEntity.ok(bookingService.getBookingsForHotelManager(hotelId,startDate,endDate,finalStatus));
     }
 
 
