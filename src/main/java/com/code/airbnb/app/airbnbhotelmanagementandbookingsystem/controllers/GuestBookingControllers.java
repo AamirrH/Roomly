@@ -4,6 +4,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingReq
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.BookingResponseDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.GuestDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services.BookingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class GuestBookingControllers {
     // View all bookings of a specific user
     // TODO : Remove {userId} PathVariable during Auth
     @PreAuthorize("hasAuthority('BOOKING_VIEW')")
-    @GetMapping("/bookings/{userId}")
+    @GetMapping("/bookings")
     private ResponseEntity<List<BookingResponseDTO>> getAllBookings(@PathVariable Long userId) {
         return ResponseEntity.ok(bookingService.getAllBookings(userId));
     }
@@ -36,7 +37,7 @@ public class GuestBookingControllers {
     // Create A Booking
     @PreAuthorize("hasAuthority('BOOKING_CREATE')")
     @PostMapping("/bookings")
-    private ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingRequestDTO bookingRequestDTO) {
+    private ResponseEntity<BookingResponseDTO> createBooking(@RequestBody @Valid BookingRequestDTO bookingRequestDTO) {
         return ResponseEntity.ok(bookingService.createBooking(bookingRequestDTO));
     }
 

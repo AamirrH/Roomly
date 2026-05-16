@@ -63,9 +63,17 @@ public class User implements UserDetails {
         return authorities;
     }
 
+    // Username Method returns email because email has been used as a primary identifier in authentication.
     @Override
     public String getUsername() {
+        return this.email;
+    }
+
+    public String getDisplayName(){
         return this.username;
+    }
+    public void setDisplayName(String username){
+        this.username = username;
     }
 
 }

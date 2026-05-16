@@ -53,13 +53,13 @@ public class UserService implements UserDetailsService {
         }
             // If the user does not exist, create a new user.
             User user = new User();
-            user.setUsername(signupDTO.getUsername());
+            user.setDisplayName(signupDTO.getUsername());
             user.setEmail(signupDTO.getEmail());
             user.setPassword(bCryptPasswordEncoder.encode(signupDTO.getPassword()));
             user.setRoles(Set.of(signupDTO.getRole() == null ? Role.USER : signupDTO.getRole()));
             // Save the user.
             userRepository.save(user);
-            return modelMapper.map(user, SignupResponseDTO.class);
+            return new SignupResponseDTO(user.getDisplayName(), user.getEmail());
     }
 
 

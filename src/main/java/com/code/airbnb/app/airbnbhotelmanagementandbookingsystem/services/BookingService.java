@@ -12,11 +12,14 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.Book
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -79,9 +82,7 @@ public class BookingService {
         }
 
         inventoryRepository.saveAll(availableRooms);
-        // TODO : Remove Dummy User and ADD Global Exception Handler
-        User user = new User();
-        user.setId(1L);
+        User user = getCurrentUser();
 
         // Create the actual booking
         Booking booking = Booking.builder()
@@ -146,12 +147,13 @@ public class BookingService {
         for(Inventory inventory : bookedInventories){
             inventory.setBookedCount(inventory.getBookedCount() - numberOfRooms);
         }
-        // Saving the cancelled Inventories
+        // Saving the canceled Inventories
         inventoryRepository.saveAll(bookedInventories);
 
-        // Setting booking status to cancelled
+        // Setting booking status to canceled
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+
 
         // TODO : Handle Payment Refund too
 
@@ -165,15 +167,19 @@ public class BookingService {
 
     // Helper Method
     public User getCurrentUser(){
-        // TODO : Dummy User Logic
-        User user = new User();
-        user.setId(1L);
-        userRepository.save(user);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+        if(user == null){
+            throw new UserNotFoundException("User with email " + email + " does not exist");
+        }
         return user;
+
     }
 
-    public List<BookingResponseDTO> getAllBookings(Long userId){
-        return bookingRepository.findByUser_Id(userId)
+    public List<BookingResponseDTO> getAllBookings(){
+        User user = getCurrentUser();
+        return bookingRepository.findByUser_Id(user.getId())
                 .stream()
                 .map(bookingDTO -> modelMapper.map(bookingDTO,BookingResponseDTO.class))
                 .collect(Collectors.toList());

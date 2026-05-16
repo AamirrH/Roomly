@@ -35,7 +35,7 @@ public class JWTService {
                 /*Claims are basically the payload of the JWT token which contains
                  non-sensitive data */
                 .claim("email", user.getEmail())
-                .claim("username", user.getUsername())
+                .claim("username", user.getDisplayName())
                 .claim("roles",user.getRoles().toString())
                 // IAT -> the time in milliseconds when the token was issued
                 .issuedAt(new Date(System.currentTimeMillis()))
@@ -55,7 +55,7 @@ public class JWTService {
                 /*Claims are basically the payload of the JWT token which contains
                  non-sensitive data */
                 .claim("email", user.getEmail())
-                .claim("username", user.getUsername())
+                .claim("username", user.getDisplayName())
                 .claim("roles",user.getRoles())
                 // IAT -> the time in milliseconds when the token was issued
                 .issuedAt(new Date(System.currentTimeMillis()))
