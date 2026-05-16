@@ -2,7 +2,6 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.servi
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.LoginDTO;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.DTOs.LoginResponseDTO;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.NoPermissionException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
@@ -32,7 +31,7 @@ public class LoginService {
         if(user == null){
             throw new UserNotFoundException("User not found");
         }
-        if(!(user.getRoles().contains(Role.USER))){
+        if(user.getRoles() == null || user.getRoles().isEmpty()){
             throw new NoPermissionException("You do not have permission to perform this operation");
         }
         // Generate Tokens
@@ -47,7 +46,7 @@ public class LoginService {
         // First verify the refreshToken
         Long id = jwtService.getUserIDFromJWTToken(refreshToken);
         User user = userService.getUserById(id);
-        if(!(user.getRoles().contains(Role.USER))){
+        if(user.getRoles() == null || user.getRoles().isEmpty()){
             throw new NoPermissionException("You do not have permission to perform this operation");
         }
         // Create a new Access Token

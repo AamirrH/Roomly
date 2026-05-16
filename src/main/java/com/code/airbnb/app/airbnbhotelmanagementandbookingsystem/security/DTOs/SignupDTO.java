@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import jakarta.websocket.OnMessage;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.Role;
 
 @Data
 @AllArgsConstructor
@@ -30,5 +31,6 @@ public class SignupDTO {
     )
     private String password;
 
+    private Role role = Role.USER;
 
 }
