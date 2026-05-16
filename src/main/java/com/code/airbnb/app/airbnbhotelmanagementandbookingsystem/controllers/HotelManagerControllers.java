@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -34,7 +35,7 @@ public class HotelManagerControllers {
 
 
     @PreAuthorize("hasAuthority('HOTEL_CREATE')")
-    @PostMapping("/hotel")
+    @PostMapping("/hotels")
     private ResponseEntity<HotelResponseDTO> createHotel(@RequestBody @Valid HotelRequestDTO hotelRequestDTO) {
         return ResponseEntity.ok(hotelService.createHotel(hotelRequestDTO));
     }
@@ -45,10 +46,19 @@ public class HotelManagerControllers {
         return ResponseEntity.ok(hotelService.findById(id));
     }
 
-//    @PatchMapping("/hotels/{hotelId}")
-//    private ResponseEntity<HotelResponseDTO> updateHotelByHotelId(@PathVariable(name = "hotelId") Long id, @RequestBody HotelRequestDTO hotelRequestDTO) {
-//        return hotelService.updateHotelByHotelId();
-//    }
+    // Update a Specific Hotel by id
+    @PreAuthorize("hasAuthority('HOTEL_UPDATE')")
+    @PatchMapping("/hotels/{hotelId}")
+    private ResponseEntity<HotelResponseDTO> updateHotelByHotelId(@PathVariable(name = "hotelId") Long id, @RequestBody Map<String,Object> updates) {
+        return hotelService.updateHotelByHotelId(id,updates);
+    }
+
+    @PreAuthorize("hasAuthority('HOTEL_DELETE')")
+    @DeleteMapping("/hotels/{hotelId}")
+    private ResponseEntity<String> deleteHotelByHotelId(@PathVariable(name = "hotelId") Long id) {
+        hotelService.deleteHotelByHotelId(id);
+        return ResponseEntity.ok("The Specified Hotel has been Deleted");
+    }
 
     // Get All Rooms of a Particular Hotel with Hotel I'd
     @PreAuthorize("hasAuthority('ROOM_VIEW')")
@@ -56,6 +66,7 @@ public class HotelManagerControllers {
     private ResponseEntity<List<RoomResponseDTO>> findAllRoomsByHotelId(@PathVariable(name = "hotelId") Long id ){
         return ResponseEntity.ok(roomService.getAllRoomsByHotelId(id));
     }
+
 
     // Add a Room to particular hotel with Hotel id
     @PreAuthorize("hasAuthority('ROOM_CREATE')")

@@ -11,11 +11,15 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,5 +62,26 @@ public class HotelService {
     }
 
 
+    public ResponseEntity<HotelResponseDTO> updateHotelByHotelId(Long id, Map<String,Object> updates) {
+        Hotel hotel = hotelRepository.findHotelById(id);
+        updates.forEach((key, value) -> {
+            // Find Required Field in Hotel.Class with same value as key and put it in a reference variable
+            Field field = ReflectionUtils.findField(Hotel.class, key);
+            if(field != null) {
+                ReflectionUtils.makeAccessible(field);
+                // Set the value of a particular hotel of those fields
+                ReflectionUtils.setField(field, hotel, value);
+            }
+        });
+        Hotel savedHotel = hotelRepository.save(hotel);
+        return ResponseEntity.ok(modelMapper.map(savedHotel,HotelResponseDTO.class));
 
+    }
+
+    public void deleteHotelByHotelId(Long id) {
+        Hotel hotel = hotelRepository.findHotelById(id);
+        // Deleting the Hotel
+        hotelRepository.delete(hotel);
+        return;
+    }
 }

@@ -1,6 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.filters;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.repository.UserRepository;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.JWTService;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.service.UserService;
 import jakarta.servlet.FilterChain;
@@ -14,13 +15,14 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class JWTAuthFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
-    private final UserService userService;
+    private final UserRepository userRepository;
 
 
 
@@ -39,10 +41,10 @@ public class JWTAuthFilter extends OncePerRequestFilter {
             // Bearer jdfogj834utu9325fds -> split -> ([""],["jdfogj834utu9325fds"])
             String jwt = token.split("Bearer ", 2)[1];
             Long userId = jwtService.getUserIDFromJWTToken(jwt);
+            User user = userRepository.findById(userId).orElse(null);
 
             // Checking if id is not null and SecurityContext does not have anything
-            if(userId != null && SecurityContextHolder.getContext().getAuthentication() == null){
-                User user = userService.getUserById(userId);
+            if(user != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 // Creating an authentication token
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
                         = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
