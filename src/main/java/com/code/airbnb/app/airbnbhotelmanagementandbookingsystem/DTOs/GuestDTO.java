@@ -1,6 +1,7 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.Gender;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -18,7 +19,7 @@ public class GuestDTO {
     private String email;
     @NotBlank(message = "Name must not be blank")
     private String phoneNumber;
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private Gender gender;
 
 }

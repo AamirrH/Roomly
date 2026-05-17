@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface HotelRepository extends JpaRepository<Hotel, Integer> {
+public interface HotelRepository extends JpaRepository<Hotel, Long> {
 
     Hotel findHotelById(Long id);
 

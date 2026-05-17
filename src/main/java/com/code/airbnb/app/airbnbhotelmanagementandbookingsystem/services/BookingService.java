@@ -13,6 +13,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.Room
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomNotAvailableException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.NoPermissionException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -107,6 +108,9 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
                 new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
 
+        // Check for booking ownership
+        checkBookingOwnership(booking);
+
         // Check if booking has expired or not, and whether the booking is RESERVED or not
         if(isBookingExpired(booking)){
             throw new BookingExpiredException("Booking is expired");
@@ -134,6 +138,14 @@ public class BookingService {
     public void cancelBooking(Long bookingId){
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
                 new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
+
+        if(booking.getStatus().equals(BookingStatus.CANCELLED)){
+            throw new BookingNotFoundException("Booking is already cancelled");
+        }
+
+        // Check for Booking Ownership
+        checkBookingOwnership(booking);
+
         // Collect all the inventories related to this booking
         Long hotelId = booking.getHotel().getId();
         Long roomId = booking.getRoom().getId();
@@ -178,6 +190,17 @@ public class BookingService {
 
     }
 
+    // Booking Ownership check
+    public void checkBookingOwnership(Booking booking){
+        User user = getCurrentUser();
+        if(!(booking.getUser().getId().equals(user.getId()))){
+            throw new NoPermissionException("You do not have permission to perform this action");
+        }
+        return;
+    }
+
+
+
     public List<BookingResponseDTO> getAllBookings(){
         User user = getCurrentUser();
         return bookingRepository.findByUser_Id(user.getId())
@@ -189,6 +212,7 @@ public class BookingService {
     public BookingResponseDTO getBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(()->
                 new BookingNotFoundException("Booking with the booking id "+bookingId+" not found"));
+        checkBookingOwnership(booking);
         return modelMapper.map(booking, BookingResponseDTO.class);
     }
 
