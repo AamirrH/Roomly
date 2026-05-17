@@ -20,6 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -140,7 +141,7 @@ public class BookingService {
                 new BookingNotFoundException("Booking with id " + bookingId + " does not exist"));
 
         if(booking.getStatus().equals(BookingStatus.CANCELLED)){
-            throw new BookingNotFoundException("Booking is already cancelled");
+            throw new BookingExpiredException("Booking is already cancelled");
         }
 
         // Check for Booking Ownership
@@ -181,6 +182,9 @@ public class BookingService {
     // Helper Method
     public User getCurrentUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken){
+            throw new UserNotFoundException("Authenticated user not found");
+        }
         String email = authentication.getName();
         User user = userRepository.findByEmail(email).orElse(null);
         if(user == null){

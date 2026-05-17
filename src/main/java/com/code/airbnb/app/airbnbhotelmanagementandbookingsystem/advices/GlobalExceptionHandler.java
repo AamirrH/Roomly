@@ -2,6 +2,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices.customerrors.CustomExceptionError;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.*;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -62,6 +63,18 @@ public class GlobalExceptionHandler {
                 .getFieldErrors()
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Invalid request");
+
+        CustomExceptionError validationError = new CustomExceptionError(HttpStatus.BAD_REQUEST, message, LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    private ResponseEntity<CustomExceptionError> handleConstraintViolationException(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations()
+                .stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .findFirst()
                 .orElse("Invalid request");
 

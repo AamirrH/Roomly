@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,20 @@ public class HotelService {
     private final ModelMapper modelMapper;
     private final InventoryRepository inventoryRepository;
     private final RoomRepository roomRepository;
+    private static final Set<String> ALLOWED_HOTEL_PATCH_FIELDS = Set.of(
+            "city",
+            "hotelName",
+            "contactInfo",
+            "photos",
+            "amenities",
+            "active"
+    );
+    private static final Set<String> ALLOWED_CONTACT_INFO_PATCH_FIELDS = Set.of(
+            "completeAddress",
+            "location",
+            "email",
+            "phoneNumber"
+    );
 
 
     public List<HotelResponseDTO> findAll() {
@@ -66,6 +81,9 @@ public class HotelService {
     public ResponseEntity<HotelResponseDTO> updateHotelByHotelId(Long id, Map<String,Object> updates) {
         Hotel hotel = hotelRepository.findHotelById(id);
         updates.forEach((key, value) -> {
+            if(!ALLOWED_HOTEL_PATCH_FIELDS.contains(key)){
+                throw new IllegalArgumentException("Field cannot be updated: " + key);
+            }
             if ("contactInfo".equals(key) && value instanceof Map<?, ?> contactInfoUpdates) {
                 ContactInfo contactInfo = hotel.getContactInfo();
                 if (contactInfo == null) {
@@ -75,6 +93,9 @@ public class HotelService {
                 }
                 ContactInfo finalContactInfo = contactInfo;
                 contactInfoUpdates.forEach((contactKey, contactValue) -> {
+                    if(!ALLOWED_CONTACT_INFO_PATCH_FIELDS.contains(String.valueOf(contactKey))){
+                        throw new IllegalArgumentException("Contact info field cannot be updated: " + contactKey);
+                    }
                     Field contactField = ReflectionUtils.findField(ContactInfo.class, String.valueOf(contactKey));
                     if(contactField != null) {
                         ReflectionUtils.makeAccessible(contactField);
