@@ -41,6 +41,20 @@ public class Payment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
     private Booking booking;
+
+    @Column(nullable = false)
+    private String currency;
+
+    @Column(name = "razorpay_order_id", unique = true)
+    private String razorpayOrderId;
+
+    @Column(name = "razorpay_payment_id", unique = true)
+    private String razorpayPaymentId;
+
+    @Column(name = "razorpay_signature")
+    private String razorpaySignature;
+
 }

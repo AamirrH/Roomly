@@ -3,6 +3,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices.customerrors.CustomExceptionError;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.*;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
 
@@ -57,6 +59,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(roomNotAvailableError);
     }
 
+    @ExceptionHandler(PaymentException.class)
+    private ResponseEntity<CustomExceptionError> handlePaymentException(PaymentException ex) {
+        CustomExceptionError paymentError = new CustomExceptionError(HttpStatus.BAD_REQUEST, ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(paymentError);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     private ResponseEntity<CustomExceptionError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult()
@@ -85,6 +93,7 @@ public class GlobalExceptionHandler {
     // Handles all Generic Exceptions
     @ExceptionHandler(Exception.class)
     private ResponseEntity<CustomExceptionError> handleGenericException(Exception ex) {
+        log.error("Unhandled application exception", ex);
         CustomExceptionError error = new CustomExceptionError(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong. Please try again later.", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

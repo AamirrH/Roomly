@@ -9,10 +9,9 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
 @Builder
+@AllArgsConstructor
 public class BookingRequestDTO {
 
     // This will be caught from the Frontend, when user search for available rooms

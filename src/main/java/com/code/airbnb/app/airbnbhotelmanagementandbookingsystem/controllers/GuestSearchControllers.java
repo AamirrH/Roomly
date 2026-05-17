@@ -30,7 +30,7 @@ public class GuestSearchControllers {
     private final BookingService bookingService;
 
     @GetMapping("/search")
-    private ResponseEntity<Page<HotelResponseDTO>> searchHotels(@RequestParam(required = false) String city,
+    public ResponseEntity<Page<HotelResponseDTO>> searchHotels(@RequestParam(required = false) String city,
                                                                 @RequestParam(required = false) LocalDate checkInDate,
                                                                 @RequestParam(required = false) LocalDate checkOutDate,
                                                                 @RequestParam(required = false) Integer numberOfRooms,
@@ -42,7 +42,7 @@ public class GuestSearchControllers {
 
     // Search a specific hotel with given parameters
     @GetMapping("/{hotelId}")
-    private ResponseEntity<List<RoomResponseDTO>> getHotels(@RequestParam(required = false) LocalDate checkInDate,
+    public ResponseEntity<List<RoomResponseDTO>> getHotels(@RequestParam(required = false) LocalDate checkInDate,
                                                             @RequestParam(required = false) LocalDate checkOutDate,
                                                             @RequestParam(required = false) Integer numberOfRooms,
                                                             @PathVariable Long hotelId){
@@ -52,7 +52,7 @@ public class GuestSearchControllers {
 
     // Get All Static Details of a Specific Room of a Specific Hotel
     @GetMapping("/{hotelId}/rooms/{roomId}")
-    private ResponseEntity<RoomResponseDTO> getGuestRoomDetails(@PathVariable Long hotelId, @PathVariable Long roomId){
+    public ResponseEntity<RoomResponseDTO> getGuestRoomDetails(@PathVariable Long hotelId, @PathVariable Long roomId){
         return ResponseEntity.ok(roomService.getRoomById(roomId,hotelId));
     }
 

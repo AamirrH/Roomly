@@ -169,8 +169,6 @@ public class BookingService {
         bookingRepository.save(booking);
 
 
-        // TODO : Handle Payment Refund too
-
     }
 
     // Helper Method
