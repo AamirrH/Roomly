@@ -52,18 +52,23 @@ public class HolidayAPIService {
         String publicHolidayCalendarId = region + "#" + calendarId;
 
         // Response catches the object which we get upon hitting the URL+uri and maps subsequent fields.
-        CalenderDTO response = restClient.get() // HTTP Method
-        .uri(uriBuilder -> uriBuilder
-                .pathSegment(publicHolidayCalendarId, "events")
-                .queryParam("key", apiKey)
-                // Filter results from a specific start date to specific end date, in our case a whole year
-                .queryParam("timeMin",timeMin)
-                .queryParam("timeMax",timeMax)
-                // Filter results with q to find only public holidays
-                .queryParam("q","Public Holiday")
-                .build()) //Variables and URI, append the URI to Base url
-                .retrieve() // Retrieve the Results.
-                .body(CalenderDTO.class);
+        CalenderDTO response = null;
+        try {
+            response = restClient.get() // HTTP Method
+            .uri(uriBuilder -> uriBuilder
+                    .pathSegment(publicHolidayCalendarId, "events")
+                    .queryParam("key", apiKey)
+                    // Filter results from a specific start date to specific end date, in our case a whole year
+                    .queryParam("timeMin",timeMin)
+                    .queryParam("timeMax",timeMax)
+                    // Filter results with q to find only public holidays
+                    .queryParam("q","Public Holiday")
+                    .build()) //Variables and URI, append the URI to Base url
+                    .retrieve() // Retrieve the Results.
+                    .body(CalenderDTO.class);
+        } catch (Exception e) {
+            throw new HolidayAPIException("Holiday Service might be down. Check again later");
+        }
 
         if (response == null) {
             throw new HolidayAPIException("Holiday response is null");
