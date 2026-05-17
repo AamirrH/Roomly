@@ -20,11 +20,10 @@ public class GuestBookingControllers {
     private final BookingService bookingService;
 
     // View all bookings of a specific user
-    // TODO : Remove {userId} PathVariable during Auth
     @PreAuthorize("hasAuthority('BOOKING_VIEW')")
     @GetMapping("/bookings")
-    private ResponseEntity<List<BookingResponseDTO>> getAllBookings(@PathVariable Long userId) {
-        return ResponseEntity.ok(bookingService.getAllBookings(userId));
+    private ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
     // View details of a specific booking

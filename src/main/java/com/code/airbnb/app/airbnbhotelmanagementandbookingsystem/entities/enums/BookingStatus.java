@@ -7,6 +7,7 @@ public enum BookingStatus {
     CHECKED_IN,
     CHECKED_OUT,
     RESERVED,
-    GUESTS_ADDED
+    GUESTS_ADDED,
+    EXPIRED
 
 }
