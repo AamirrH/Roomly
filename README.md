@@ -327,25 +327,4 @@ VITE_API_BASE_URL=http://localhost:8081
 - Controllers should keep request handler methods `public`, especially with Spring method security.
 - If dependency injection acts weird after hot reload, stop the Java process on port `8081` and run the backend fresh.
 
-## Current Status
-
-Done:
-
-- Auth and roles
-- Guest booking flow
-- Manager dashboard
-- Inventory locking
-- Dynamic pricing
-- Exception handling
-- Booking ownership checks
-- Razorpay backend + frontend integration
-- Role-aware frontend
-- README and `.gitignore`
-
-Still worth doing:
-
-- Add seed/dummy data.
-- Run one complete Razorpay test payment.
-- Add automated tests for booking/payment/security.
-- Add a clear admin user creation flow.
 
