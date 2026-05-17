@@ -10,6 +10,7 @@ import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.BookingExpiredException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.BookingNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomNotAvailableException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.entities.User;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.exceptions.UserNotFoundException;
@@ -65,7 +66,7 @@ public class BookingService {
         long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         // Check if the rooms are available or not
         if(availableRooms.size() != totalDays){
-            throw new RoomDoesNotExistException("Rooms not available for specified dates");
+            throw new RoomNotAvailableException("Rooms not available for specified dates");
         }
 
         // Dynamic Pricing Strategy

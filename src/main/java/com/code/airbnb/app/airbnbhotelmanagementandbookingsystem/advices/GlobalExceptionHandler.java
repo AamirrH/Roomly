@@ -1,10 +1,10 @@
 package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices;
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.advices.customerrors.CustomExceptionError;
-import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.enums.BookingStatus;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -34,8 +34,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HotelNotActiveException.class)
     private ResponseEntity<CustomExceptionError> handleHotelNotActiveException(HotelNotActiveException ex) {
-        CustomExceptionError hotelNotActiveError = new CustomExceptionError(HttpStatus.SERVICE_UNAVAILABLE,ex.getMessage(), LocalDateTime.now());
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(hotelNotActiveError);
+        CustomExceptionError hotelNotActiveError = new CustomExceptionError(HttpStatus.CONFLICT,ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(hotelNotActiveError);
     }
 
     @ExceptionHandler(HotelNotFoundException.class)
@@ -48,6 +48,25 @@ public class GlobalExceptionHandler {
     private ResponseEntity<CustomExceptionError> handleRoomDoesNotExistException(RoomDoesNotExistException ex) {
         CustomExceptionError roomDoesNotExistError = new CustomExceptionError(HttpStatus.NOT_FOUND, ex.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(roomDoesNotExistError);
+    }
+
+    @ExceptionHandler(RoomNotAvailableException.class)
+    private ResponseEntity<CustomExceptionError> handleRoomNotAvailableException(RoomNotAvailableException ex) {
+        CustomExceptionError roomNotAvailableError = new CustomExceptionError(HttpStatus.CONFLICT, ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(roomNotAvailableError);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    private ResponseEntity<CustomExceptionError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Invalid request");
+
+        CustomExceptionError validationError = new CustomExceptionError(HttpStatus.BAD_REQUEST, message, LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
     }
 
     // Handles all Generic Exceptions
