@@ -29,11 +29,29 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-## Frontend workspace
-frontend/
+
 
 ### VS Code ###
 .vscode/
+
+### Frontend / Node ###
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+### Local env files ###
+.env
+.env.*
+frontend/.env
+frontend/.env.*
+
+### OS files ###
+.DS_Store
+Thumbs.db
 
 ## Environment Variables
 src/main/resources/application.properties
