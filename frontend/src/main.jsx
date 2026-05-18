@@ -41,6 +41,7 @@ import { CheckoutModal, HotelDetail, MyBookings } from "./components/stayExperie
 import { fallbackHotels, fallbackRooms, img, sampleBookings } from "./data/roomlyContent";
 import { pageInfo, responseItems } from "./lib/apiShape";
 import { csvToList, displayHotelName, firstPhoto, listToCsv, money, nights } from "./lib/display";
+import { loadRazorpayCheckout, razorpayFailureMessage } from "./lib/razorpay";
 import { apiRequest } from "./lib/request";
 import "./styles.css";
 
@@ -152,6 +153,7 @@ function App() {
     label: "Checking API",
     detail: API_BASE
   });
+  const hotelSearchCache = React.useRef(new Map());
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -285,16 +287,40 @@ function App() {
     }));
   }
 
-  async function fetchHotelPage(pageNumber, pageSize) {
+  function hotelSearchCacheKey(searchQuery, pageSize) {
+    return JSON.stringify({
+      city: searchQuery.city?.trim() || "",
+      checkInDate: searchQuery.checkInDate,
+      checkOutDate: searchQuery.checkOutDate,
+      numberOfRooms: Number(searchQuery.numberOfRooms || 1),
+      pageSize
+    });
+  }
+
+  function applyHotelResults(allHotels, pageNumber, pageSize) {
+    const metadata = {
+      number: pageNumber,
+      size: pageSize,
+      totalPages: Math.max(Math.ceil(allHotels.length / pageSize), 1),
+      totalElements: allHotels.length
+    };
+    setHotelResults(allHotels);
+    setHotels(allHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize));
+    setHotelPage(metadata);
+    noteApiSuccess(allHotels);
+    return metadata;
+  }
+
+  async function fetchHotelPage(pageNumber, pageSize, searchQuery = query) {
     const params = new URLSearchParams({
-      checkInDate: query.checkInDate,
-      checkOutDate: query.checkOutDate,
-      numberOfRooms: query.numberOfRooms,
+      checkInDate: searchQuery.checkInDate,
+      checkOutDate: searchQuery.checkOutDate,
+      numberOfRooms: searchQuery.numberOfRooms,
       pageNumber,
       pageSize
     });
-    if (query.city?.trim()) {
-      params.set("city", query.city.trim());
+    if (searchQuery.city?.trim()) {
+      params.set("city", searchQuery.city.trim());
     }
 
     const page = await request(`/roomly/api/v1/hotels/search?${params.toString()}`);
@@ -305,46 +331,54 @@ function App() {
     };
   }
 
-  async function searchHotels(event, pageNumber = 0, pageSize = HOTEL_RESULTS_PAGE_SIZE) {
+  async function searchHotels(event, pageNumber = 0, pageSize = HOTEL_RESULTS_PAGE_SIZE, searchQuery = query) {
     event?.preventDefault();
     setView("hotels");
+    const cacheKey = hotelSearchCacheKey(searchQuery, pageSize);
+    const cachedHotels = hotelSearchCache.current.get(cacheKey);
+
+    if (cachedHotels) {
+      applyHotelResults(cachedHotels, pageNumber, pageSize);
+      setMenuOpen(false);
+      return;
+    }
+
     setLoading(true);
+    setHotels([]);
+    setHotelResults([]);
+    setHotelPage({
+      number: 0,
+      size: pageSize,
+      totalPages: 1,
+      totalElements: 0
+    });
     try {
-      const firstPage = await fetchHotelPage(0, pageSize);
+      const firstPage = await fetchHotelPage(0, pageSize, searchQuery);
       const totalPagesFromBackend = firstPage.metadata.totalPages || 1;
       const discoveredPages = Math.max(totalPagesFromBackend, firstPage.content.length === pageSize ? 2 : 1);
       const remainingPageNumbers = Array.from({ length: Math.max(discoveredPages - 1, 0) }, (_, index) => index + 1);
-      const remainingPages = await Promise.all(remainingPageNumbers.map((nextPage) => fetchHotelPage(nextPage, pageSize)));
+      const remainingPages = await Promise.all(remainingPageNumbers.map((nextPage) => fetchHotelPage(nextPage, pageSize, searchQuery)));
       let allHotels = [firstPage, ...remainingPages].flatMap((page) => page.content);
 
       // If backend metadata says one page but page 2 still has data, keep walking until empty.
       let nextPage = discoveredPages;
       while (totalPagesFromBackend <= 1 && remainingPages.at(-1)?.content?.length === pageSize && nextPage < 50) {
-        const extraPage = await fetchHotelPage(nextPage, pageSize);
+        const extraPage = await fetchHotelPage(nextPage, pageSize, searchQuery);
         if (!extraPage.content.length) break;
         allHotels = allHotels.concat(extraPage.content);
         nextPage += 1;
       }
 
-      const metadata = {
-        number: pageNumber,
-        size: pageSize,
-        totalPages: Math.max(Math.ceil(allHotels.length / pageSize), 1),
-        totalElements: allHotels.length
-      };
-      const visibleHotels = allHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize);
+      hotelSearchCache.current.set(cacheKey, allHotels);
+      const metadata = applyHotelResults(allHotels, pageNumber, pageSize);
 
       if (import.meta.env.DEV) {
         console.info("Roomly hotel search page", {
           requestedPage: pageNumber,
-          returnedItems: visibleHotels.length,
+          returnedItems: allHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize).length,
           metadata
         });
       }
-      noteApiSuccess(allHotels);
-      setHotelResults(allHotels);
-      setHotels(visibleHotels);
-      setHotelPage(metadata);
       if (!allHotels.length) notify("No live stays returned for these dates.");
     } catch (error) {
       noteApiFailure(error);
@@ -370,6 +404,11 @@ function App() {
       ...current,
       number: boundedPage
     }));
+  }
+
+  function applyRefineSearch(nextQuery) {
+    setQuery(nextQuery);
+    searchHotels(null, 0, HOTEL_RESULTS_PAGE_SIZE, nextQuery);
   }
 
   async function openHotel(hotel) {
@@ -480,6 +519,18 @@ function App() {
         reject(new Error("Razorpay checkout is not available"));
         return;
       }
+      if (!paymentOrder?.razorpayOrderId || !paymentOrder?.razorpayKeyId || !paymentOrder?.amountInPaise || !paymentOrder?.currency) {
+        console.error("Invalid Razorpay order payload", paymentOrder);
+        reject(new Error("Invalid Razorpay order payload from backend"));
+        return;
+      }
+
+      console.info("Opening Razorpay checkout", {
+        keyPrefix: paymentOrder.razorpayKeyId.slice(0, 8),
+        orderPrefix: paymentOrder.razorpayOrderId.slice(0, 8),
+        amountInPaise: paymentOrder.amountInPaise,
+        currency: paymentOrder.currency
+      });
 
       const checkout = new window.Razorpay({
         key: paymentOrder.razorpayKeyId,
@@ -550,7 +601,7 @@ function App() {
       />
       {loading && <div className="loading-strip">Curating your request</div>}
       {view === "home" && <Landing query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
-      {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} changePage={changeHotelPage} openHotel={openHotel} />}
+      {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} applyRefineSearch={applyRefineSearch} changePage={changeHotelPage} openHotel={openHotel} loading={loading} />}
       {view === "detail" && <HotelDetail hotel={selectedHotel} rooms={rooms} query={query} navigate={navigate} selectRoom={selectRoom} bookingBlocked={authUser && !isGuestUser(authUser)} />}
       {view === "bookings" && (isGuestUser(authUser) ? <MyBookings bookings={bookings} navigate={navigate} /> : <AccessPanel title="Guest account required" text="Bookings are attached to guest accounts. Sign in as a guest to view reservations." action="Sign In" onAction={() => openAuth("login")} />)}
       {view === "manager" && (isManagerUser(authUser) ? <AdminDashboard authUser={authUser} request={request} roleLabel={roleLabel} /> : <AccessPanel title="Manager access required" text="The hotel operations console is visible only to hotel managers and Roomly admins." action="Sign In" onAction={() => openAuth("login")} />)}
@@ -573,7 +624,6 @@ function App() {
 function Navbar({ view, navigate, menuOpen, setMenuOpen, searchHotels, authUser, openAuth, logout, apiStatus }) {
   const links = [
     ["hotels", "Hotels"],
-    ["detail", "Rooms"],
     ...(isGuestUser(authUser) ? [["bookings", "My Bookings"]] : []),
     ...(isManagerUser(authUser) ? [["manager", "Manager Console"]] : [])
   ];

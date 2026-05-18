@@ -61,11 +61,41 @@ export function Landing({ query, updateQuery, searchHotels, openHotel }) {
   );
 }
 
-export function SearchResults({ hotels, page, query, updateQuery, searchHotels, changePage, openHotel }) {
+export function SearchResults({ hotels, page, query, updateQuery, searchHotels, applyRefineSearch, changePage, openHotel, loading }) {
   const currentPage = page?.number || 0;
   const totalPages = page?.totalPages || 1;
   const totalElements = page?.totalElements ?? hotels.length;
   const pages = Array.from({ length: totalPages }, (_, index) => index);
+  const displayHotels = loading ? [] : hotels;
+
+  if (loading) {
+    return (
+      <main className="search-page">
+        <SearchBar compact query={query} updateQuery={updateQuery} onSubmit={searchHotels} />
+        <div className="search-layout">
+          <aside className="filters filters-skeleton" aria-hidden="true">
+            <span className="skeleton-line title" />
+            <span className="skeleton-line" />
+            <span className="skeleton-line" />
+            <span className="skeleton-line" />
+            <div className="membership-skeleton skeleton-box" />
+          </aside>
+          <section className="results">
+            <div className="results-head">
+              <div>
+                <span className="skeleton-line heading" />
+                <span className="skeleton-line subheading" />
+              </div>
+              <span className="skeleton-button" />
+            </div>
+            <div className="results-grid">
+              {Array.from({ length: 9 }).map((_, index) => <HotelCardSkeleton key={index} />)}
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="search-page">
@@ -74,7 +104,11 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
         <aside className="filters">
           <h3>Refine Search</h3>
           <FilterBlock label="Location">
-            <select name="city" value={query.city} onChange={updateQuery}>
+            <select
+              name="city"
+              value={query.city}
+              onChange={(event) => applyRefineSearch({ ...query, city: event.target.value })}
+            >
               <option value="">All destinations</option>
               <option value="Mumbai">Mumbai</option>
               <option value="Goa">Goa</option>
@@ -84,12 +118,12 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
           </FilterBlock>
           <FilterBlock label="Price per night">
             <div className="range-copy"><span>INR 2,000</span><strong>INR 50,000</strong></div>
-            <input type="range" min="2000" max="50000" defaultValue="18000" />
+            <input type="range" min="2000" max="50000" defaultValue="50000" disabled />
           </FilterBlock>
           <FilterBlock label="Star Rating">
             {[5, 4].map((count) => (
               <label className="check-line" key={count}>
-                <input type="checkbox" defaultChecked />
+                <input type="checkbox" defaultChecked disabled />
                 <span>{Array.from({ length: count }).map((_, i) => <Star key={i} size={13} fill="currentColor" />)}</span>
               </label>
             ))}
@@ -102,7 +136,7 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
               [Dumbbell, "Gym"]
             ].map(([Icon, label]) => (
               <label className="check-line" key={label}>
-                <input type="checkbox" />
+                <input type="checkbox" disabled />
                 <span><Icon size={15} /> {label}</span>
               </label>
             ))}
@@ -132,16 +166,18 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
             </label>
           </div>
           <div className="results-grid">
-            {hotels.map((hotel) => <HotelCard hotel={hotel} key={hotel.id} onOpen={openHotel} />)}
+            {loading
+              ? Array.from({ length: 6 }).map((_, index) => <HotelCardSkeleton key={index} />)
+              : displayHotels.map((hotel) => <HotelCard hotel={hotel} key={hotel.id} onOpen={openHotel} />)}
           </div>
-          {!hotels.length && (
+          {!loading && !displayHotels.length && (
             <div className="empty-results">
               <Hotel size={34} />
               <h2>No live stays returned</h2>
               <p>Try removing the city filter, checking the backend date range, or running the Neon smoke test.</p>
             </div>
           )}
-          {totalPages >= 1 && (
+          {!loading && totalPages >= 1 && (
             <div className="pagination">
               <button onClick={() => changePage(currentPage - 1)} disabled={currentPage === 0} type="button"><ChevronLeft size={18} /></button>
               {pages.map((pageNumber) => (
@@ -155,6 +191,27 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
         </section>
       </div>
     </main>
+  );
+}
+
+function HotelCardSkeleton() {
+  return (
+    <article className="hotel-card hotel-card-skeleton" aria-hidden="true">
+      <div className="hotel-image skeleton-box" />
+      <div className="hotel-body">
+        <span className="skeleton-line short" />
+        <span className="skeleton-line title" />
+        <div className="pill-row">
+          <span className="skeleton-pill" />
+          <span className="skeleton-pill" />
+          <span className="skeleton-pill" />
+        </div>
+        <div className="price-action">
+          <span className="skeleton-line price" />
+          <span className="skeleton-button" />
+        </div>
+      </div>
+    </article>
   );
 }
 
