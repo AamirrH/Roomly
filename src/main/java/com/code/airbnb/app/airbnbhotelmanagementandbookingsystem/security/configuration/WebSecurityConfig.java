@@ -2,6 +2,7 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.confi
 
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.security.filters.JWTAuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -27,6 +30,9 @@ import java.util.List;
 public class WebSecurityConfig {
 
     private final JWTAuthFilter jwtAuthFilter;
+
+    @Value("${app.cors.allowed-origins:}")
+    private String configuredAllowedOrigins;
 
     private final String[] publicRoutes = {
             "/roomly/api/v1/login",
@@ -65,12 +71,19 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
+        List<String> allowedOrigins = new ArrayList<>(List.of(
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:5174",
                 "http://localhost:5173",
                 "http://localhost:5174"
         ));
+        if (configuredAllowedOrigins != null && !configuredAllowedOrigins.isBlank()) {
+            allowedOrigins.addAll(Arrays.stream(configuredAllowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isBlank())
+                    .toList());
+        }
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
