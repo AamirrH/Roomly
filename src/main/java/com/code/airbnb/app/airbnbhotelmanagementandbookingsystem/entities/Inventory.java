@@ -15,7 +15,12 @@ import java.time.LocalDateTime;
         uniqueConstraints = @UniqueConstraint(
                 name = "uq_inventory_hotel_room_date",
                 columnNames = {"hotel_id", "room_id", "date"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_inventory_date", columnList = "date"),
+                @Index(name = "idx_inventory_hotel_date", columnList = "hotel_id, date"),
+                @Index(name = "idx_inventory_room_date", columnList = "room_id, date")
+        }
 )
 @Getter
 @Setter
