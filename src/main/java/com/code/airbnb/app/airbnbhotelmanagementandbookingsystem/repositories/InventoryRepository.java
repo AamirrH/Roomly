@@ -27,12 +27,12 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     @Query(value = """
        SELECT DISTINCT i.hotel FROM Inventory i
-       WHERE i.hotel.city = :city
+       WHERE (:city IS NULL OR :city = '' OR LOWER(i.hotel.city) = LOWER(:city))
        AND i.date >= :checkInDate AND i.date < :checkOutDate
        AND i.closed = false
        AND (i.totalCount - i.bookedCount) >= :numberOfRooms
        GROUP BY i.hotel
-       HAVING COUNT(i) = :totalDays
+       HAVING COUNT(DISTINCT i.date) = :totalDays
        """)
     Page<Hotel> findAvailableHotels(
             @Param("city") String city,

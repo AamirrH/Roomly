@@ -40,7 +40,7 @@ import "./styles.css";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
 const ACCESS_TOKEN_KEY = "roomlyAccessToken";
 const USER_KEY = "roomlyUser";
-const API_CHECK_PATH = "/roomly/api/v1/hotels/search?city=Mumbai&checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=1";
+const API_CHECK_PATH = "/roomly/api/v1/hotels/search?checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=1";
 
 const img = {
   heroLeft: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1100&q=88",
@@ -254,6 +254,15 @@ function loadRazorpayCheckout() {
   });
 }
 
+function razorpayFailureMessage(response) {
+  const error = response?.error;
+  if (!error) return "Payment failed. Please try again.";
+  const details = [error.code, error.source, error.step, error.reason]
+    .filter(Boolean)
+    .join(" / ");
+  return details ? `${error.description || "Payment failed"} (${details})` : (error.description || "Payment failed. Please try again.");
+}
+
 function firstPhoto(item, fallback) {
   return item?.photos?.[0] || fallback;
 }
@@ -281,6 +290,16 @@ function responseItems(payload) {
   if (Array.isArray(payload?._embedded?.hotels)) return payload._embedded.hotels;
   if (Array.isArray(payload?._embedded?.rooms)) return payload._embedded.rooms;
   return [];
+}
+
+function pageInfo(payload, fallback = {}) {
+  const metadata = payload?.page || payload || {};
+  return {
+    number: metadata.number ?? fallback.number ?? 0,
+    size: metadata.size ?? fallback.size ?? responseItems(payload).length,
+    totalPages: Math.max(metadata.totalPages ?? fallback.totalPages ?? 1, 1),
+    totalElements: metadata.totalElements ?? fallback.totalElements ?? responseItems(payload).length
+  };
 }
 
 function parseJwtPayload(token) {
@@ -356,12 +375,18 @@ function App() {
     }
   });
   const [query, setQuery] = React.useState({
-    city: "Mumbai",
+    city: "",
     checkInDate: "2026-05-20",
     checkOutDate: "2026-05-23",
     numberOfRooms: 1
   });
   const [hotels, setHotels] = React.useState(fallbackHotels);
+  const [hotelPage, setHotelPage] = React.useState({
+    number: 0,
+    size: 9,
+    totalPages: 1,
+    totalElements: fallbackHotels.length
+  });
   const [rooms, setRooms] = React.useState(fallbackRooms);
   const [bookings, setBookings] = React.useState(sampleBookings);
   const [selectedHotel, setSelectedHotel] = React.useState(fallbackHotels[0]);
@@ -507,31 +532,46 @@ function App() {
     }));
   }
 
-  async function searchHotels(event) {
+  async function searchHotels(event, pageNumber = 0, pageSize = hotelPage.size) {
     event?.preventDefault();
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        city: query.city,
         checkInDate: query.checkInDate,
         checkOutDate: query.checkOutDate,
         numberOfRooms: query.numberOfRooms,
-        pageNumber: 0,
-        pageSize: 12
+        pageNumber,
+        pageSize
       });
+      if (query.city?.trim()) {
+        params.set("city", query.city.trim());
+      }
       const page = await request(`/roomly/api/v1/hotels/search?${params.toString()}`);
       const content = responseItems(page);
+      const metadata = pageInfo(page, { number: pageNumber, size: pageSize, totalElements: content.length });
       noteApiSuccess(content);
-      setHotels(content.length ? content : fallbackHotels);
-      if (!content.length) notify("No live stays returned yet. Showing editorial sample stays.");
+      setHotels(content);
+      setHotelPage(metadata);
+      if (!content.length) notify("No live stays returned for these dates.");
     } catch (error) {
       noteApiFailure(error);
       setHotels(fallbackHotels);
+      setHotelPage({
+        number: 0,
+        size: fallbackHotels.length,
+        totalPages: 1,
+        totalElements: fallbackHotels.length
+      });
       notify("Backend request failed. Showing editorial sample stays.");
     } finally {
       setView("hotels");
       setLoading(false);
     }
+  }
+
+  function changeHotelPage(nextPage) {
+    const boundedPage = Math.max(0, Math.min(nextPage, Math.max(hotelPage.totalPages - 1, 0)));
+    searchHotels(null, boundedPage, hotelPage.size);
   }
 
   async function openHotel(hotel) {
@@ -669,7 +709,8 @@ function App() {
       });
 
       checkout.on("payment.failed", (response) => {
-        reject(new Error(response?.error?.description || "Payment failed. Please try again."));
+        console.warn("Razorpay payment failed", response?.error);
+        reject(new Error(razorpayFailureMessage(response)));
       });
 
       checkout.open();
@@ -706,7 +747,7 @@ function App() {
       />
       {loading && <div className="loading-strip">Curating your request</div>}
       {view === "home" && <Landing query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
-      {view === "hotels" && <SearchResults hotels={hotels} query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
+      {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} changePage={changeHotelPage} openHotel={openHotel} />}
       {view === "detail" && <HotelDetail hotel={selectedHotel} rooms={rooms} query={query} navigate={navigate} selectRoom={selectRoom} authUser={authUser} />}
       {view === "bookings" && (isGuestUser(authUser) ? <MyBookings bookings={bookings} navigate={navigate} /> : <AccessPanel title="Guest account required" text="Bookings are attached to guest accounts. Sign in as a guest to view reservations." action="Sign In" onAction={() => openAuth("login")} />)}
       {view === "manager" && (isManagerUser(authUser) ? <AdminDashboard authUser={authUser} /> : <AccessPanel title="Manager access required" text="The hotel operations console is visible only to hotel managers and Roomly admins." action="Sign In" onAction={() => openAuth("login")} />)}
@@ -721,7 +762,7 @@ function App() {
         />
       )}
       {toast && <Toast message={toast} />}
-      {view !== "manager" && <Footer />}
+      {view !== "manager" && <Footer authUser={authUser} />}
     </div>
   );
 }
@@ -1005,17 +1046,19 @@ function SectionHeader({ eyebrow, title, inverse = false }) {
 }
 
 function HotelCard({ hotel, onOpen }) {
+  const hotelName = hotel.hotelName || hotel.name || `Roomly ${hotel.city}`;
+  const hotelAddress = hotel.address || hotel.contactInfo?.completeAddress || hotel.contactInfo?.location || hotel.city;
   return (
     <article className="hotel-card">
       <div className="hotel-image">
-        <img src={firstPhoto(hotel, img.searchA)} alt={`${hotel.name || hotel.city} hotel`} />
+        <img src={firstPhoto(hotel, img.searchA)} alt={`${hotelName} hotel`} />
         <span className="availability">Available Stay</span>
         <button className="wish" type="button" aria-label="Wishlist"><Heart size={18} /></button>
       </div>
       <div className="hotel-body">
-        <p className="pin"><MapPin size={14} /> {hotel.address || hotel.city}</p>
+        <p className="pin"><MapPin size={14} /> {hotelAddress}</p>
         <div className="hotel-title-line">
-          <h3>{hotel.name || `Roomly ${hotel.city}`}</h3>
+          <h3>{hotelName}</h3>
           <span className="rating"><Star size={14} fill="currentColor" /> {hotel.rating || 4.9}</span>
         </div>
         <div className="pill-row">
@@ -1117,7 +1160,13 @@ function Testimonials() {
   );
 }
 
-function SearchResults({ hotels, query, updateQuery, searchHotels, openHotel }) {
+function SearchResults({ hotels, page, query, updateQuery, searchHotels, changePage, openHotel }) {
+  const currentPage = page?.number || 0;
+  const totalPages = page?.totalPages || 1;
+  const totalElements = page?.totalElements ?? hotels.length;
+  const pages = Array.from({ length: totalPages }, (_, index) => index)
+    .filter((index) => totalPages <= 7 || index === 0 || index === totalPages - 1 || Math.abs(index - currentPage) <= 1);
+
   return (
     <main className="search-page">
       <SearchBar compact query={query} updateQuery={updateQuery} onSubmit={searchHotels} />
@@ -1125,11 +1174,12 @@ function SearchResults({ hotels, query, updateQuery, searchHotels, openHotel }) 
         <aside className="filters">
           <h3>Refine Search</h3>
           <FilterBlock label="Location">
-            <select defaultValue={query.city}>
-              <option>Mumbai</option>
-              <option>Goa</option>
-              <option>Jaipur</option>
-              <option>Delhi</option>
+            <select name="city" value={query.city} onChange={updateQuery}>
+              <option value="">All destinations</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Goa">Goa</option>
+              <option value="Jaipur">Jaipur</option>
+              <option value="Delhi">Delhi</option>
             </select>
           </FilterBlock>
           <FilterBlock label="Price per night">
@@ -1168,8 +1218,8 @@ function SearchResults({ hotels, query, updateQuery, searchHotels, openHotel }) 
         <section className="results">
           <div className="results-head">
             <div>
-              <h1>Showing {hotels.length || 0} Hotels <em>in {query.city}</em></h1>
-              <p>Curated selections for the discerning traveler.</p>
+              <h1>Showing {totalElements || hotels.length || 0} Hotels <em>in {query.city || "all destinations"}</em></h1>
+              <p>Page {currentPage + 1} of {totalPages}. Curated selections for the discerning traveler.</p>
             </div>
             <label className="sort-control">
               <span>Sort by:</span>
@@ -1184,15 +1234,27 @@ function SearchResults({ hotels, query, updateQuery, searchHotels, openHotel }) 
           <div className="results-grid">
             {hotels.map((hotel) => <HotelCard hotel={hotel} key={hotel.id} onOpen={openHotel} />)}
           </div>
-          <div className="pagination">
-            <button><ChevronLeft size={18} /></button>
-            <button className="active">1</button>
-            <button>2</button>
-            <button>3</button>
-            <span>...</span>
-            <button>12</button>
-            <button><ChevronRight size={18} /></button>
-          </div>
+          {!hotels.length && (
+            <div className="empty-results">
+              <Hotel size={34} />
+              <h2>No live stays returned</h2>
+              <p>Try removing the city filter, checking the backend date range, or running the Neon smoke test.</p>
+            </div>
+          )}
+          {totalPages >= 1 && (
+            <div className="pagination">
+              <button onClick={() => changePage(currentPage - 1)} disabled={currentPage === 0} type="button"><ChevronLeft size={18} /></button>
+              {pages.map((pageNumber, index) => (
+                <React.Fragment key={pageNumber}>
+                  {index > 0 && pageNumber - pages[index - 1] > 1 && <span>...</span>}
+                  <button className={pageNumber === currentPage ? "active" : ""} onClick={() => changePage(pageNumber)} type="button">
+                    {pageNumber + 1}
+                  </button>
+                </React.Fragment>
+              ))}
+              <button onClick={() => changePage(currentPage + 1)} disabled={currentPage >= totalPages - 1} type="button"><ChevronRight size={18} /></button>
+            </div>
+          )}
         </section>
       </div>
     </main>
@@ -1994,18 +2056,21 @@ function Toast({ message }) {
   return <div className="toast">{message}</div>;
 }
 
-function Footer() {
+function Footer({ authUser }) {
+  const columns = [
+    ["Company", "Brand", "Our Story", "Careers", "Press"],
+    ...(isManagerUser(authUser)
+      ? [["For Managers", "Partner Portal", "Management Tools", "Inventory", "Reports"]]
+      : [["For Guests", "Collections", "Concierge", "Member Perks", "Support"]])
+  ];
+
   return (
     <footer className="footer">
       <div>
         <h2>Roomly</h2>
         <p>Elevating the art of the stay through meticulous curation and live pricing.</p>
       </div>
-      {[
-        ["Company", "Brand", "Our Story", "Careers", "Press"],
-        ["For Guests", "Collections", "Concierge", "Member Perks", "Support"],
-        ["For Managers", "List Your Property", "Partner Portal", "Management Tools", "Affiliates"]
-      ].map(([title, ...links]) => (
+      {columns.map(([title, ...links]) => (
         <div key={title}>
           <h3>{title}</h3>
           {links.map((link) => <a href="#" key={link}>{link}</a>)}
