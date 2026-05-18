@@ -1,6 +1,7 @@
 export async function apiRequest(apiBase, tokenKey, path, options = {}) {
   const token = window.localStorage.getItem(tokenKey);
   const response = await fetch(`${apiBase}${path}`, {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
