@@ -50,6 +50,25 @@ const ACCESS_TOKEN_KEY = "roomlyAccessToken";
 const USER_KEY = "roomlyUser";
 const API_CHECK_PATH = "/roomly/api/v1/hotels/search?checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=1";
 const HOTEL_RESULTS_PAGE_SIZE = 9;
+const VIEW_HASH = {
+  home: "",
+  hotels: "hotels",
+  detail: "hotel",
+  bookings: "bookings",
+  manager: "manager",
+  auth: "auth"
+};
+const HASH_VIEW = Object.fromEntries(Object.entries(VIEW_HASH).map(([view, hash]) => [hash, view]));
+
+function viewFromHash() {
+  const hash = window.location.hash.replace(/^#\/?/, "").split("?")[0];
+  return HASH_VIEW[hash] || "home";
+}
+
+function hashForView(view) {
+  const hash = VIEW_HASH[view] || "";
+  return hash ? `#/${hash}` : "#/";
+}
 
 function parseJwtPayload(token) {
   if (!token) return null;
@@ -115,7 +134,7 @@ function request(path, options = {}) {
 }
 
 function App() {
-  const [view, setView] = React.useState("home");
+  const [view, setView] = React.useState(() => viewFromHash());
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [authMode, setAuthMode] = React.useState("login");
   const [authUser, setAuthUser] = React.useState(() => {
@@ -154,6 +173,32 @@ function App() {
     detail: API_BASE
   });
   const hotelSearchCache = React.useRef(new Map());
+
+  React.useEffect(() => {
+    if (!window.location.hash) {
+      window.history.replaceState({ view: "home" }, "", hashForView("home"));
+    } else {
+      window.history.replaceState({ view }, "", hashForView(view));
+    }
+
+    function handleHistoryChange() {
+      setView(viewFromHash());
+      setMenuOpen(false);
+      setCheckoutOpen(false);
+    }
+
+    window.addEventListener("popstate", handleHistoryChange);
+    return () => window.removeEventListener("popstate", handleHistoryChange);
+  }, []);
+
+  function goToView(next, options = {}) {
+    setView(next);
+    const nextHash = hashForView(next);
+    if (window.location.hash !== nextHash) {
+      const method = options.replace ? "replaceState" : "pushState";
+      window.history[method]({ view: next }, "", nextHash);
+    }
+  }
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -226,7 +271,7 @@ function App() {
 
   function openAuth(mode = "login") {
     setAuthMode(mode);
-    setView("auth");
+    goToView("auth");
     setMenuOpen(false);
   }
 
@@ -263,7 +308,7 @@ function App() {
       window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
       setAuthUser(nextUser);
       notify(mode === "signup" ? "Welcome to Roomly. Your guest account is ready." : "Welcome back. Your session is ready.");
-      setView(isManagerUser(nextUser) ? "manager" : "home");
+      goToView(isManagerUser(nextUser) ? "manager" : "home", { replace: true });
     } catch (error) {
       notify(error?.message || (mode === "signup" ? "Signup failed. Check your details and try again." : "Login failed. Check your credentials."));
     } finally {
@@ -276,7 +321,7 @@ function App() {
     window.localStorage.removeItem(USER_KEY);
     setAuthUser(null);
     notify("Signed out of Roomly.");
-    setView("home");
+    goToView("home", { replace: true });
   }
 
   function updateQuery(event) {
@@ -333,7 +378,7 @@ function App() {
 
   async function searchHotels(event, pageNumber = 0, pageSize = HOTEL_RESULTS_PAGE_SIZE, searchQuery = query) {
     event?.preventDefault();
-    setView("hotels");
+    goToView("hotels");
     const cacheKey = hotelSearchCacheKey(searchQuery, pageSize);
     const cachedHotels = hotelSearchCache.current.get(cacheKey);
 
@@ -430,7 +475,7 @@ function App() {
       setRooms(fallbackRooms.map((room) => ({ ...room, hotelId: hotel.id })));
       notify("Room request failed. Showing sample room selections.");
     } finally {
-      setView("detail");
+      goToView("detail");
       setLoading(false);
     }
   }
@@ -505,7 +550,7 @@ function App() {
       ]);
       notify("Payment verified. Your booking is confirmed.");
       setCheckoutOpen(false);
-      setView("bookings");
+      goToView("bookings");
     } catch (error) {
       notify(error?.message || "Payment could not be completed. Please try again.");
     } finally {
@@ -582,7 +627,7 @@ function App() {
       if (!authUser) openAuth("login");
       return;
     }
-    setView(next);
+    goToView(next);
     setMenuOpen(false);
   }
 
