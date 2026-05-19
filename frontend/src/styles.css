@@ -571,13 +571,15 @@ button:disabled {
 
 .searchbar {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 1fr 0.75fr 58px;
+  grid-template-columns: minmax(180px, 1.25fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(112px, 0.75fr) 58px;
+  align-items: end;
   gap: 8px;
   width: min(100%, 1060px);
   padding: 10px;
   border-radius: 8px;
   background: var(--paper);
   box-shadow: 0 12px 40px rgb(13 13 13 / 5%);
+  overflow: visible;
 }
 
 .searchbar.compact {
@@ -587,6 +589,7 @@ button:disabled {
 .field {
   display: grid;
   gap: 7px;
+  min-width: 0;
 }
 
 .field > span,
@@ -604,6 +607,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   min-height: 54px;
   border: 1px solid rgb(201 168 76 / 18%);
   border-radius: 6px;
@@ -620,6 +624,11 @@ button:disabled {
   outline: 0;
   background: transparent;
   color: var(--ink);
+}
+
+.field input[name="numberOfRooms"] {
+  min-width: 48px;
+  text-align: center;
 }
 
 .field:focus-within > div,
@@ -2556,6 +2565,17 @@ td:last-child {
 
   .reservation-summary {
     position: static;
+  }
+}
+
+@media (max-width: 1320px) {
+  .landing-hero .searchbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-hero .gold-button {
+    width: 100%;
+    grid-column: 1 / -1;
   }
 }
 
