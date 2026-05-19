@@ -688,6 +688,7 @@ button:disabled {
   overflow: hidden;
   border-radius: 8px;
   box-shadow: var(--deep-shadow);
+  background: var(--forest);
 }
 
 .image-panel.tall {
@@ -705,6 +706,12 @@ button:disabled {
   height: 100%;
   object-fit: cover;
   transition: transform 700ms ease;
+}
+
+.image-panel img {
+  position: absolute;
+  inset: 0;
+  object-position: center;
 }
 
 .image-panel:hover img,
