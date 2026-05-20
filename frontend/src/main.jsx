@@ -494,6 +494,31 @@ function App() {
     setCheckoutOpen(true);
   }
 
+  async function cancelBooking(booking) {
+    if (!booking?.id || Number.isNaN(Number(booking.id))) {
+      notify("Demo bookings cannot be cancelled. Try this on a live booking.");
+      return;
+    }
+
+    const confirmed = window.confirm("Cancel this booking? This will release the reserved inventory.");
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      await request(`/roomly/api/v1/bookings/${booking.id}/cancel`, {
+        method: "PATCH"
+      });
+      setBookings((current) => current.map((item) => (
+        item.id === booking.id ? { ...item, status: "CANCELLED" } : item
+      )));
+      notify("Booking cancelled successfully.");
+    } catch (error) {
+      notify(error?.message || "Could not cancel this booking.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function confirmBooking(form) {
     if (!isGuestUser(authUser)) {
       notify("Use a guest account to complete reservations.");
@@ -648,7 +673,7 @@ function App() {
       {view === "home" && <Landing query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
       {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} applyRefineSearch={applyRefineSearch} changePage={changeHotelPage} openHotel={openHotel} loading={loading} />}
       {view === "detail" && <HotelDetail hotel={selectedHotel} rooms={rooms} query={query} navigate={navigate} selectRoom={selectRoom} bookingBlocked={authUser && !isGuestUser(authUser)} />}
-      {view === "bookings" && (isGuestUser(authUser) ? <MyBookings bookings={bookings} navigate={navigate} /> : <AccessPanel title="Guest account required" text="Bookings are attached to guest accounts. Sign in as a guest to view reservations." action="Sign In" onAction={() => openAuth("login")} />)}
+      {view === "bookings" && (isGuestUser(authUser) ? <MyBookings bookings={bookings} navigate={navigate} onCancelBooking={cancelBooking} /> : <AccessPanel title="Guest account required" text="Bookings are attached to guest accounts. Sign in as a guest to view reservations." action="Sign In" onAction={() => openAuth("login")} />)}
       {view === "manager" && (isManagerUser(authUser) ? <AdminDashboard authUser={authUser} request={request} roleLabel={roleLabel} /> : <AccessPanel title="Manager access required" text="The hotel operations console is visible only to hotel managers and Roomly admins." action="Sign In" onAction={() => openAuth("login")} />)}
       {view === "auth" && <AuthPage mode={authMode} setMode={setAuthMode} onSubmit={submitAuth} />}
       {checkoutOpen && (

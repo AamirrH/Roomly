@@ -25,5 +25,11 @@ export async function apiRequest(apiBase, tokenKey, path, options = {}) {
   }
 
   const text = await response.text();
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }

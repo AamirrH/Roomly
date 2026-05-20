@@ -153,7 +153,7 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
   );
 }
 
-export function MyBookings({ bookings, navigate }) {
+export function MyBookings({ bookings, navigate, onCancelBooking }) {
   const [activeTab, setActiveTab] = React.useState("Upcoming");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -185,7 +185,7 @@ export function MyBookings({ bookings, navigate }) {
       </div>
       <section className="booking-list">
         {visibleBookings.length ? (
-          visibleBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
+          visibleBookings.map((booking) => <BookingCard booking={booking} key={booking.id} onCancelBooking={onCancelBooking} />)
         ) : (
           <div className="empty-bookings">
             <h3>No {activeTab.toLowerCase()} stays yet</h3>
@@ -235,7 +235,13 @@ function RoomSelectionCard({ room, featured, onSelect, disabled }) {
   );
 }
 
-function BookingCard({ booking }) {
+function BookingCard({ booking, onCancelBooking }) {
+  const status = String(booking.status || "").toUpperCase();
+  const isCancelled = status.includes("CANCEL");
+  const checkout = booking.checkoutDate ? new Date(booking.checkoutDate) : null;
+  const isPast = checkout && !Number.isNaN(checkout.getTime()) && checkout < new Date();
+  const canCancel = !isCancelled && !isPast;
+
   return (
     <article className="booking-card">
       <img src={booking.photo || img.heroLeft} alt={booking.hotelName} />
@@ -253,7 +259,10 @@ function BookingCard({ booking }) {
         </div>
         <div className="booking-bottom">
           <span>Booking ID: #{booking.id}</span>
-          <strong>{money(booking.finalCalculatedPrice)}</strong>
+          <div className="booking-actions">
+            {canCancel && <button className="danger-button" onClick={() => onCancelBooking?.(booking)} type="button">Cancel Booking</button>}
+            <strong>{money(booking.finalCalculatedPrice)}</strong>
+          </div>
         </div>
       </div>
     </article>

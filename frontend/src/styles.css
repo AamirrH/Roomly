@@ -1910,11 +1910,33 @@ button:disabled {
 }
 
 .booking-bottom {
+  display: flex;
   align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
   padding-top: 24px;
   background-image: linear-gradient(rgb(201 168 76 / 20%), rgb(201 168 76 / 20%));
   background-size: 100% 1px;
   background-repeat: no-repeat;
+}
+
+.booking-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.danger-button {
+  border: 1px solid rgb(164 48 37 / 22%);
+  border-radius: 6px;
+  background: var(--red-soft);
+  color: #a43025;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .escape-card {
