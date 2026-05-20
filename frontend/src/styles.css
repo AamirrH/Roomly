@@ -1817,6 +1817,23 @@ button:disabled {
   gap: 28px;
 }
 
+.empty-bookings {
+  border: 1px solid rgb(201 168 76 / 18%);
+  border-radius: 8px;
+  padding: 38px;
+  background: var(--paper);
+}
+
+.empty-bookings h3 {
+  color: var(--forest);
+  font-size: 34px;
+}
+
+.empty-bookings p {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
 .booking-card {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
