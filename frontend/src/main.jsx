@@ -165,6 +165,7 @@ function App() {
   const [selectedHotel, setSelectedHotel] = React.useState(fallbackHotels[0]);
   const [selectedRoom, setSelectedRoom] = React.useState(fallbackRooms[0]);
   const [checkoutOpen, setCheckoutOpen] = React.useState(false);
+  const [cancelTarget, setCancelTarget] = React.useState(null);
   const [toast, setToast] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [apiStatus, setApiStatus] = React.useState({
@@ -185,6 +186,7 @@ function App() {
       setView(viewFromHash());
       setMenuOpen(false);
       setCheckoutOpen(false);
+      setCancelTarget(null);
     }
 
     window.addEventListener("popstate", handleHistoryChange);
@@ -500,17 +502,20 @@ function App() {
       return;
     }
 
-    const confirmed = window.confirm("Cancel this booking? This will release the reserved inventory.");
-    if (!confirmed) return;
+    setCancelTarget(booking);
+  }
 
+  async function confirmCancelBooking() {
+    if (!cancelTarget) return;
     setLoading(true);
     try {
-      await request(`/roomly/api/v1/bookings/${booking.id}/cancel`, {
+      await request(`/roomly/api/v1/bookings/${cancelTarget.id}/cancel`, {
         method: "PATCH"
       });
       setBookings((current) => current.map((item) => (
-        item.id === booking.id ? { ...item, status: "CANCELLED" } : item
+        item.id === cancelTarget.id ? { ...item, status: "CANCELLED" } : item
       )));
+      setCancelTarget(null);
       notify("Booking cancelled successfully.");
     } catch (error) {
       notify(error?.message || "Could not cancel this booking.");
@@ -683,6 +688,14 @@ function App() {
           query={query}
           onClose={() => setCheckoutOpen(false)}
           onConfirm={confirmBooking}
+        />
+      )}
+      {cancelTarget && (
+        <ConfirmDialog
+          booking={cancelTarget}
+          loading={loading}
+          onClose={() => setCancelTarget(null)}
+          onConfirm={confirmCancelBooking}
         />
       )}
       {toast && <Toast message={toast} />}
@@ -877,6 +890,32 @@ function AuthPage({ mode, setMode, onSubmit }) {
 
 function Toast({ message }) {
   return <div className="toast">{message}</div>;
+}
+
+function ConfirmDialog({ booking, loading, onClose, onConfirm }) {
+  return (
+    <div className="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="cancel-booking-title">
+      <div className="checkout-backdrop" onClick={loading ? undefined : onClose} />
+      <section className="confirm-dialog">
+        <button className="modal-close" onClick={onClose} disabled={loading} type="button"><X size={20} /></button>
+        <span className="confirm-kicker">Cancel reservation</span>
+        <h2 id="cancel-booking-title">Release this booking?</h2>
+        <p>
+          This will cancel booking #{booking.id} and return the reserved rooms to inventory.
+        </p>
+        <div className="confirm-summary">
+          <span>{booking.hotelName || "Roomly Stay"}</span>
+          <strong>{booking.checkInDate} - {booking.checkoutDate}</strong>
+        </div>
+        <div className="confirm-actions">
+          <button className="soft-button" onClick={onClose} disabled={loading} type="button">Keep Booking</button>
+          <button className="danger-button solid" onClick={onConfirm} disabled={loading} type="button">
+            {loading ? "Cancelling..." : "Cancel Booking"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function Footer({ authUser }) {
