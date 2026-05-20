@@ -32,8 +32,8 @@ export function Landing({ query, updateQuery, searchHotels, openHotel }) {
           </p>
           <SearchBar query={query} updateQuery={updateQuery} onSubmit={searchHotels} />
           <div className="stats-row">
-            <Stat value="2,400+" label="Hotels" />
-            <Stat value="180+" label="Cities" />
+            <Stat value="20+" label="Hotels" />
+            <Stat value="15+" label="Cities" />
             <Stat value="98%" label="Satisfaction" />
           </div>
         </div>
