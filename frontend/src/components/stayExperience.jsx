@@ -154,6 +154,22 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
 }
 
 export function MyBookings({ bookings, navigate }) {
+  const [activeTab, setActiveTab] = React.useState("Upcoming");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  function bookingGroup(booking) {
+    const status = String(booking.status || "").toUpperCase();
+    if (status.includes("CANCEL")) return "Cancelled";
+
+    const checkout = booking.checkoutDate ? new Date(booking.checkoutDate) : null;
+    if (checkout && !Number.isNaN(checkout.getTime()) && checkout < today) return "Past";
+
+    return "Upcoming";
+  }
+
+  const visibleBookings = bookings.filter((booking) => bookingGroup(booking) === activeTab);
+
   return (
     <main className="bookings-page">
       <header className="bookings-head">
@@ -161,10 +177,21 @@ export function MyBookings({ bookings, navigate }) {
         <p>A curated collection of past adventures and upcoming journeys.</p>
       </header>
       <div className="booking-tabs">
-        {["Upcoming", "Past", "Cancelled"].map((tab, i) => <button className={i === 0 ? "active" : ""} key={tab}>{tab}</button>)}
+        {["Upcoming", "Past", "Cancelled"].map((tab) => (
+          <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+            {tab}
+          </button>
+        ))}
       </div>
       <section className="booking-list">
-        {bookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)}
+        {visibleBookings.length ? (
+          visibleBookings.map((booking) => <BookingCard booking={booking} key={booking.id} />)
+        ) : (
+          <div className="empty-bookings">
+            <h3>No {activeTab.toLowerCase()} stays yet</h3>
+            <p>{activeTab === "Upcoming" ? "Book a stay to see it here." : "Completed and cancelled reservations will be grouped here."}</p>
+          </div>
+        )}
       </section>
       <section className="escape-card">
         <BedDouble size={42} />
