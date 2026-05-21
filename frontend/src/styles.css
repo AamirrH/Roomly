@@ -1795,6 +1795,51 @@ button:disabled {
   outline: 0;
 }
 
+.guest-manifest {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.guest-manifest > span {
+  padding-left: 8px;
+  color: var(--gold-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.guest-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(140px, 1fr) minmax(110px, .8fr) minmax(95px, .65fr);
+  gap: 10px;
+}
+
+.guest-row input,
+.guest-row select {
+  min-width: 0;
+  border: 1px solid rgb(201 168 76 / 18%);
+  border-radius: 6px;
+  background: var(--parchment);
+  padding: 13px 12px;
+  outline: 0;
+}
+
+.guest-row input:focus,
+.guest-row select:focus,
+.request-box textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgb(201 168 76 / 10%);
+}
+
+.form-error {
+  margin: 12px 0 0;
+  color: #a43025;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .secure-line {
   display: flex;
   align-items: center;
@@ -2743,6 +2788,7 @@ td:last-child {
   .booking-card,
   .booking-meta,
   .form-grid,
+  .guest-row,
   .stat-cards,
   .footer {
     grid-template-columns: 1fr;

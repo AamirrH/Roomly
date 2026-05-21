@@ -548,6 +548,12 @@ function App() {
           numberOfRooms: form.rooms
         })
       });
+
+      const bookingWithGuests = await request(`/roomly/api/v1/bookings/${created.id}/guests`, {
+        method: "PATCH",
+        body: JSON.stringify(form.guestList)
+      });
+
       const paymentOrder = await request("/roomly/api/v1/payments/orders", {
         method: "POST",
         body: JSON.stringify({
@@ -569,6 +575,7 @@ function App() {
       setBookings((current) => [
         {
           ...created,
+          ...bookingWithGuests,
           status: verifiedPayment?.bookingStatus || "CONFIRMED",
           id: created?.id || `RM-${Date.now()}`,
           hotelName: selectedHotel.name || `Roomly ${selectedHotel.city}`,

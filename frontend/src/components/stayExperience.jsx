@@ -85,6 +85,11 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
     guests: 2,
     specialRequests: ""
   });
+  const [guestList, setGuestList] = React.useState([
+    { name: "", email: "", phoneNumber: "", gender: "OTHER" },
+    { name: "", email: "", phoneNumber: "", gender: "OTHER" }
+  ]);
+  const [error, setError] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
   const stayNights = nights({ checkInDate: form.checkInDate, checkOutDate: form.checkOutDate });
@@ -98,10 +103,35 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
+  function updateGuest(index, field, value) {
+    setGuestList((current) => current.map((guest, currentIndex) => (
+      currentIndex === index ? { ...guest, [field]: value } : guest
+    )));
+  }
+
+  React.useEffect(() => {
+    const guestCount = Math.max(1, Number(form.guests || 1));
+    setGuestList((current) => {
+      if (current.length === guestCount) return current;
+      if (current.length > guestCount) return current.slice(0, guestCount);
+      return [
+        ...current,
+        ...Array.from({ length: guestCount - current.length }, () => ({ name: "", email: "", phoneNumber: "", gender: "OTHER" }))
+      ];
+    });
+  }, [form.guests]);
+
   async function submitPayment() {
+    const incompleteGuest = guestList.some((guest) => !guest.name.trim() || !guest.email.trim() || !guest.phoneNumber.trim());
+    if (incompleteGuest) {
+      setError("Please add name, email, and phone number for every guest.");
+      return;
+    }
+
+    setError("");
     setSubmitting(true);
     try {
-      await onConfirm({ ...form, finalCalculatedPrice: total });
+      await onConfirm({ ...form, guestList, finalCalculatedPrice: total });
     } finally {
       setSubmitting(false);
     }
@@ -133,6 +163,22 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
             <span>Special Requests</span>
             <textarea name="specialRequests" value={form.specialRequests} onChange={update} placeholder="Dietary requirements, late check-in, or room scent preferences..." />
           </label>
+          <div className="guest-manifest">
+            <span>Guest Manifest</span>
+            {guestList.map((guest, index) => (
+              <div className="guest-row" key={index}>
+                <input value={guest.name} onChange={(event) => updateGuest(index, "name", event.target.value)} placeholder={`Guest ${index + 1} name`} />
+                <input value={guest.email} onChange={(event) => updateGuest(index, "email", event.target.value)} placeholder="Email" type="email" />
+                <input value={guest.phoneNumber} onChange={(event) => updateGuest(index, "phoneNumber", event.target.value)} placeholder="Phone" />
+                <select value={guest.gender} onChange={(event) => updateGuest(index, "gender", event.target.value)}>
+                  <option value="OTHER">Other</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+            ))}
+          </div>
+          {error && <p className="form-error">{error}</p>}
           <p className="secure-line"><ShieldCheck size={15} /> Guaranteed secure reservation</p>
         </div>
         <aside className="price-panel">
