@@ -1,98 +1,120 @@
-# Roomly - Hotel Booking and Management System
+# Roomly 🏨
 
-Roomly is a full-stack hotel booking platform built with Spring Boot, React, PostgreSQL, JWT security, dynamic pricing, manager/admin tools, and Razorpay test payments.
+Roomly is a full-stack hotel booking and hotel-management platform built as a student/portfolio project. It combines a Spring Boot backend, React frontend, PostgreSQL database, JWT security, live inventory search, dynamic pricing, Razorpay test payments, and role-aware hotel manager tools.
 
-It started as an Airbnb-style hotel booking backend and grew into a complete guest + hotel manager system with real booking rules, inventory locking, role-based access, and a polished frontend.
+The project started as an Airbnb-style booking backend and grew into a complete guest + manager workflow with real booking rules, ownership checks, inventory locking, deployment, and production-style error handling.
+
+## Recruiter Highlights ✨
+
+- 🔐 **Spring Security + JWT** with role/permission based access control.
+- 🧾 **Razorpay test payment integration** with backend order creation and signature verification.
+- 📅 **Google Calendar Holiday API** used by the pricing engine for holiday-aware price adjustments.
+- ⚙️ **Dynamic pricing engine** using strategy classes: base price, surge, occupancy, urgency, and holiday pricing.
+- 🧵 **Concurrency control** with pessimistic locking during booking to reduce double-booking risk.
+- 🏨 **Hotel manager/admin dashboard** for hotels, rooms, inventory, bookings, and reports.
+- 👤 **User ownership checks** at the service layer so users cannot act on another user's booking by guessing IDs.
+- 🧯 **Global exception handling** for custom domain errors, validation errors, security errors, and generic failures.
+- 🚀 **Deployed full-stack app** using Vercel frontend, Railway backend, and Neon PostgreSQL.
+
+## Live Demo 🌐
+
+- Frontend: `https://roomly-xi.vercel.app/`
+- Backend: `https://roomly-production-dba9.up.railway.app/`
+
+Note: this is a portfolio deployment using demo hotels and test payment credentials. Some data is seeded and may not represent real hotels.
 
 ## Features
 
-### Guest
+### Guest Experience
 
-- Search hotels by city, dates, and number of rooms.
-- View available rooms for a hotel.
-- Dynamic room pricing based on inventory/date conditions.
-- Signup/login with JWT authentication.
-- Create bookings as a logged-in guest.
-- View only your own bookings.
-- Add guests to your own booking.
-- Cancel your own booking.
-- Pay through Razorpay Checkout.
-- Booking becomes `CONFIRMED` only after backend verifies Razorpay signature.
+- Search hotels by city, check-in date, check-out date, and number of rooms.
+- Browse live hotel availability with pagination and frontend caching.
+- View room options for a selected hotel.
+- Signup/login as a guest.
+- Create bookings only as an authenticated guest.
+- Pay with Razorpay Checkout in test mode.
+- View personal bookings grouped into Upcoming, Past, and Cancelled.
+- Cancel eligible bookings through a custom confirmation modal.
+- Add guests to bookings.
+- Guests cannot access manager/admin tools.
 
-### Hotel Manager / Admin
+### Manager/Admin Experience
 
-- Role-aware manager dashboard.
-- Create, view, update, and delete hotels.
-- Create, view, update, and delete rooms.
-- Update inventory for a room/date.
-- View bookings for a hotel.
-- Filter bookings by date/status.
+- Role-aware dashboard for hotel managers/admins.
+- Create, update, and delete hotels.
+- Create, update, and delete rooms.
+- Update room inventory for specific dates.
+- View booking ledger for managed hotels.
+- Filter bookings by date and status.
 - Generate booking reports.
-- Manager/admin accounts cannot book rooms as guests from the frontend.
+- Manager/admin accounts are blocked from guest booking flows in the frontend.
 
 ### Security
 
-- Spring Security + JWT access/refresh tokens.
+- JWT-based authentication.
 - BCrypt password hashing.
-- Role and permission based authorization.
-- Public signup creates only `USER` accounts.
-- Manager pages are hidden from guest users.
-- Guest booking pages are hidden from manager/admin users.
-- Service-layer ownership checks prevent users from accessing other users' bookings.
-- Global exception handlers for custom, validation, security, and generic errors.
+- Role and permission mapping through Spring Security authorities.
+- Public signup creates normal `USER` accounts only.
+- Protected controller endpoints with method security.
+- Service-layer booking ownership checks for:
+  - viewing a booking
+  - adding guests
+  - cancelling bookings
+  - payment order creation and verification
+- Custom security exception responses.
 
 ### Payments
 
-- Razorpay Java SDK on backend.
-- Razorpay Checkout on frontend.
-- Backend creates Razorpay orders using server-side booking amount.
-- Frontend never controls the payment amount.
+- Backend creates Razorpay orders using the server-side booking amount.
+- Frontend opens Razorpay Checkout.
 - Backend verifies:
   - `razorpay_order_id`
   - `razorpay_payment_id`
   - `razorpay_signature`
-- Payment success updates:
-  - `Payment.status = SUCCESS`
-  - `Booking.status = CONFIRMED`
+- Booking becomes `CONFIRMED` only after backend verification.
+- Cancelled/expired/confirmed bookings are guarded against invalid payment attempts.
 
-## Tech Stack
+### Pricing and Inventory
+
+- Inventory is stored per `hotel + room + date`.
+- Unique inventory constraint prevents duplicate inventory rows.
+- Search checks availability across the full stay range.
+- Booking updates inventory counts.
+- Cancellation releases inventory back.
+- Dynamic price calculation uses chained strategies:
+  - base price
+  - surge factor
+  - occupancy pricing
+  - urgency pricing
+  - holiday pricing through Google Calendar API
+
+## Tech Stack 🛠️
 
 | Layer | Tech |
 | --- | --- |
 | Frontend | React, Vite, CSS, lucide-react |
-| Backend | Java, Spring Boot, Spring MVC |
-| Security | Spring Security, JWT, BCrypt |
+| Backend | Java 21, Spring Boot, Spring MVC |
+| Security | Spring Security, JWT/JJWT, BCrypt |
 | Database | PostgreSQL, Spring Data JPA, Hibernate |
-| Payments | Razorpay |
+| Payments | Razorpay Java SDK + Razorpay Checkout |
+| External API | Google Calendar Holiday API |
 | Validation | Jakarta Bean Validation |
 | Mapping | ModelMapper |
-| Build | Maven, npm |
-
-## Important Backend Concepts
-
-- **Inventory locking:** booking uses pessimistic locking to avoid double booking.
-- **Dynamic pricing:** pricing is built with chained strategies:
-  - base price
-  - surge factor
-  - occupancy adjustment
-  - urgency adjustment
-  - holiday adjustment
-- **Ownership checks:** controllers are secured, but services still verify booking ownership.
-- **Role permissions:** roles map to authorities through `PermissionMapping`.
-- **Payment verification:** Razorpay success is trusted only after backend signature verification.
+| Deployment | Vercel, Railway, Neon PostgreSQL |
+| Build Tools | Maven, npm |
 
 ## Roles
 
 | Role | Access |
 | --- | --- |
 | `USER` | Search, book, pay, view own bookings, add guests, cancel own bookings |
-| `HOTEL_MANAGER` | View/manage rooms, inventory, and hotel bookings |
-| `HOTEL_ADMIN` | Manage hotels, rooms, inventory, and reports |
-| `ROOMLY_ADMIN` | All permissions |
+| `HOTEL_MANAGER` | Manage hotel operations for assigned/managed hotels |
+| `HOTEL_ADMIN` | Hotel, room, inventory, booking, and report operations |
+| `ROOMLY_ADMIN` | Highest-level admin permissions |
 
 ## Main API Routes
 
-Backend local URL:
+Local backend URL:
 
 ```text
 http://localhost:8081
@@ -103,21 +125,21 @@ http://localhost:8081
 | Method | Route | Description |
 | --- | --- | --- |
 | `POST` | `/roomly/api/v1/signup` | Create guest account |
-| `POST` | `/roomly/api/v1/login` | Login and get tokens |
+| `POST` | `/roomly/api/v1/login` | Login and receive tokens |
 | `POST` | `/roomly/api/v1/refresh` | Refresh access token |
 
-### Guest Search
+### Hotel Search
 
 | Method | Route | Description |
 | --- | --- | --- |
 | `GET` | `/roomly/api/v1/hotels/search` | Search available hotels |
-| `GET` | `/roomly/api/v1/hotels/{hotelId}` | Get available rooms |
+| `GET` | `/roomly/api/v1/hotels/{hotelId}` | Get available rooms for hotel |
 | `GET` | `/roomly/api/v1/hotels/{hotelId}/rooms/{roomId}` | Get room details |
 
 Example:
 
 ```text
-/roomly/api/v1/hotels/search?city=Mumbai&checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=12
+/roomly/api/v1/hotels/search?city=Mumbai&checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=9
 ```
 
 ### Guest Booking
@@ -125,7 +147,7 @@ Example:
 | Method | Route | Description |
 | --- | --- | --- |
 | `GET` | `/roomly/api/v1/bookings` | Current user's bookings |
-| `GET` | `/roomly/api/v1/booking/{bookingId}` | Current user's booking by id |
+| `GET` | `/roomly/api/v1/booking/{bookingId}` | Current user's booking by ID |
 | `POST` | `/roomly/api/v1/bookings` | Create booking |
 | `PATCH` | `/roomly/api/v1/bookings/{bookingId}/guests` | Add guests |
 | `PATCH` | `/roomly/api/v1/bookings/{bookingId}/cancel` | Cancel booking |
@@ -148,26 +170,7 @@ Create booking body:
 | Method | Route | Description |
 | --- | --- | --- |
 | `POST` | `/roomly/api/v1/payments/orders` | Create Razorpay order |
-| `POST` | `/roomly/api/v1/payments/verify` | Verify payment signature |
-
-Create order:
-
-```json
-{
-  "bookingId": 12
-}
-```
-
-Verify payment:
-
-```json
-{
-  "bookingId": 12,
-  "razorpayOrderId": "order_xxx",
-  "razorpayPaymentId": "pay_xxx",
-  "razorpaySignature": "signature_xxx"
-}
-```
+| `POST` | `/roomly/api/v1/payments/verify` | Verify Razorpay signature |
 
 ### Manager/Admin
 
@@ -190,7 +193,7 @@ Base paths:
 | `GET` | `/hotels/{hotelId}/rooms/{roomId}` | Get room |
 | `PATCH` | `/hotels/{hotelId}/rooms/{roomId}` | Update room |
 | `DELETE` | `/hotels/{hotelId}/rooms/{roomId}` | Delete room |
-| `GET` | `/bookings` | Manager booking ledger |
+| `GET` | `/bookings` | Hotel booking ledger |
 | `POST` | `/reports` | Booking report |
 | `PATCH` | `/inventory/{hotelId}/{roomId}/{date}` | Update inventory |
 
@@ -215,8 +218,15 @@ Important relationships:
 - One user has many bookings.
 - One booking belongs to one user, hotel, and room.
 - One booking can have many guests.
-- One booking has one payment.
-- Inventory is unique per `hotel + room + date`.
+- One booking has payment records.
+- Inventory is unique for `hotel_id + room_id + date`.
+
+Useful indexes:
+
+- `inventory(date)`
+- `inventory(hotel_id, date)`
+- `inventory(room_id, date)`
+- `hotels(city)`
 
 ## Project Structure
 
@@ -232,11 +242,13 @@ Important relationships:
 │   ├── strategies
 │   ├── exceptions
 │   └── advices
-├── src/main/resources
 ├── frontend
-│   ├── src
-│   ├── package.json
-│   └── index.html
+│   ├── src/components
+│   ├── src/data
+│   ├── src/lib
+│   ├── src/main.jsx
+│   └── src/styles.css
+├── ARCHITECTURE.md
 ├── pom.xml
 └── README.md
 ```
@@ -245,20 +257,21 @@ Important relationships:
 
 ### Requirements
 
-- Java 25
+- Java 21
 - Maven or Maven wrapper
 - PostgreSQL
 - Node.js + npm
 - Razorpay test account
+- Google Calendar API key
 
-### Backend setup
+### Backend Setup
 
 Create `src/main/resources/application.properties`:
 
 ```properties
 spring.application.name=AirBnb-Hotel-Management-and-Booking-System
 
-spring.datasource.url=jdbc:postgresql://localhost:5432/Roomly
+spring.datasource.url=jdbc:postgresql://localhost:5432/roomly
 spring.datasource.username=postgres
 spring.datasource.password=your_password
 spring.jpa.hibernate.ddl-auto=update
@@ -266,7 +279,7 @@ spring.jpa.show-sql=true
 
 server.port=8081
 
-JWT_SECRET_KEY=replace_with_long_secret
+JWT_SECRET_KEY=replace_with_a_long_secret
 
 razorpay.key-id=rzp_test_your_key
 razorpay.key-secret=your_test_secret
@@ -291,13 +304,7 @@ Windows:
 .\mvnw.cmd spring-boot:run
 ```
 
-If wrapper fails, run from IntelliJ or install Maven and use:
-
-```bash
-mvn spring-boot:run
-```
-
-### Frontend setup
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -305,26 +312,52 @@ npm install
 npm run dev
 ```
 
-Frontend runs at:
-
-```text
-http://127.0.0.1:5173
-```
-
-If port `5173` is busy, Vite may use `5174`.
-
 Optional `frontend/.env`:
 
 ```properties
 VITE_API_BASE_URL=http://localhost:8081
 ```
 
-## Notes
+Frontend usually runs at:
 
-- `application.properties`, `target`, `frontend/node_modules`, and `frontend/dist` are ignored by Git.
-- Use Razorpay test cards/details while testing payments.
-- Manager/admin accounts are not created through public signup.
-- Controllers should keep request handler methods `public`, especially with Spring method security.
-- If dependency injection acts weird after hot reload, stop the Java process on port `8081` and run the backend fresh.
+```text
+http://127.0.0.1:5173
+```
 
+## Deployment Notes 🚀
 
+- Frontend can be deployed on Vercel.
+- Backend can be deployed on Railway.
+- PostgreSQL can be hosted on Neon.
+- On Railway, use environment variables instead of committing `application.properties`.
+- Set `SERVER_PORT=${{PORT}}` or use Railway's expected port behavior.
+- Add the deployed frontend URL to CORS config/env.
+- Use `JAVA_TOOL_OPTIONS=-Xms128m -Xmx512m -XX:+UseSerialGC` on small containers if memory is tight.
+
+## Things to Keep in Mind 📝
+
+- This is a student/portfolio project, not a real hotel marketplace.
+- Hotels, rooms, images, users, and inventory can be demo/seed data.
+- Razorpay is configured for test mode.
+- Public signup creates guest users only; manager/admin roles should be assigned manually.
+- `application.properties`, secrets, `target`, `frontend/node_modules`, and `frontend/dist` should stay out of Git.
+- Some UI flows are intentionally portfolio-friendly and may need extra production hardening for a real business.
+- The backend has stronger business logic than the frontend; the frontend is polished but still intentionally lightweight.
+
+## Current Status
+
+Roomly is deployed and functional with:
+
+- live hotel search
+- paginated hotel browsing
+- booking creation
+- Razorpay test checkout
+- payment verification
+- booking cancellation
+- role-aware frontend
+- admin/manager dashboard
+- Neon PostgreSQL data
+- Railway backend
+- Vercel frontend
+
+Built with a lot of debugging, iteration, and stubbornness. 🙂
