@@ -94,13 +94,34 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
 
   const stayNights = nights({ checkInDate: form.checkInDate, checkOutDate: form.checkOutDate });
   const roomRate = Number(room?.estimatedAverageNightlyPrice || room?.basePrice || 0);
+  const maxGuests = Math.max(2, Number(form.rooms || 1) * 2);
   const subtotal = roomRate * stayNights * Number(form.rooms || 1);
   const gst = subtotal * 0.18;
   const total = subtotal + gst;
 
   function update(event) {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => {
+      if (name === "rooms") {
+        const nextRooms = Math.max(1, Number(value || 1));
+        const nextMaxGuests = nextRooms * 2;
+        return {
+          ...current,
+          rooms: nextRooms,
+          guests: Math.min(Number(current.guests || 1), nextMaxGuests)
+        };
+      }
+
+      if (name === "guests") {
+        const currentMaxGuests = Math.max(2, Number(current.rooms || 1) * 2);
+        return {
+          ...current,
+          guests: Math.min(Math.max(1, Number(value || 1)), currentMaxGuests)
+        };
+      }
+
+      return { ...current, [name]: value };
+    });
   }
 
   function updateGuest(index, field, value) {
@@ -122,6 +143,11 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
   }, [form.guests]);
 
   async function submitPayment() {
+    if (Number(form.guests || 1) > maxGuests) {
+      setError(`Only ${maxGuests} guests are allowed for ${form.rooms} room${Number(form.rooms) === 1 ? "" : "s"}.`);
+      return;
+    }
+
     const incompleteGuest = guestList.some((guest) => !guest.name.trim() || !guest.email.trim() || !guest.phoneNumber.trim());
     if (incompleteGuest) {
       setError("Please add name, email, and phone number for every guest.");
@@ -156,7 +182,7 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
               <input min="1" name="rooms" value={form.rooms} onChange={update} type="number" />
             </Field>
             <Field icon={Users} label="Guests">
-              <input min="1" name="guests" value={form.guests} onChange={update} type="number" />
+              <input max={maxGuests} min="1" name="guests" value={form.guests} onChange={update} type="number" />
             </Field>
           </div>
           <label className="request-box">
@@ -164,7 +190,10 @@ export function CheckoutModal({ room, query, onClose, onConfirm }) {
             <textarea name="specialRequests" value={form.specialRequests} onChange={update} placeholder="Dietary requirements, late check-in, or room scent preferences..." />
           </label>
           <div className="guest-manifest">
-            <span>Guest Manifest</span>
+            <div className="guest-manifest-head">
+              <span>Guest Manifest</span>
+              <small>Limit: 2 guests per room, {maxGuests} max</small>
+            </div>
             {guestList.map((guest, index) => (
               <div className="guest-row" key={index}>
                 <input value={guest.name} onChange={(event) => updateGuest(index, "name", event.target.value)} placeholder={`Guest ${index + 1} name`} />
