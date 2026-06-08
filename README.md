@@ -1,8 +1,5 @@
 <img width="881" height="673" alt="Roomly-Favicon" src="https://github.com/user-attachments/assets/efbbafc5-aa97-4209-8499-ebeb33000428" />
 
-# Disclaimer
-Due to the web app being deployed on **Render - Free Tier** "Cold Starts" are expected and the web app may take upto 2 minutes to get connected to the backend.
-
 # Roomly 🏨
 
 Roomly is a full-stack hotel booking and hotel-management platform built as a student/portfolio project. It combines a Spring Boot backend, React frontend, PostgreSQL database, JWT security, live inventory search, dynamic pricing, Razorpay test payments, and role-aware hotel manager tools.
