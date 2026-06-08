@@ -148,8 +148,8 @@ function App() {
   });
   const [query, setQuery] = React.useState({
     city: "",
-    checkInDate: "2026-05-20",
-    checkOutDate: "2026-05-23",
+    checkInDate: "Add Date",
+    checkOutDate: "Add Date",
     numberOfRooms: 1
   });
   const [hotels, setHotels] = React.useState(fallbackHotels);
