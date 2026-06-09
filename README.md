@@ -6,7 +6,7 @@ Roomly is a full-stack hotel booking and hotel-management platform built as a st
 
 The project started as an Airbnb-style booking backend and grew into a complete guest + manager workflow with real booking rules, ownership checks, inventory locking, deployment, and production-style error handling.
 
-## Recruiter Highlights ✨
+## Project Highlights ✨
 
 - 🔐 **Spring Security + JWT** with role/permission based access control.
 - 🧾 **Razorpay test payment integration** with backend order creation and signature verification.
@@ -24,8 +24,6 @@ The project started as an Airbnb-style booking backend and grew into a complete 
 - Backend: `https://roomly-production-dba9.up.railway.app/`
 
 Note: this is a portfolio deployment using demo hotels and test payment credentials. Some data is seeded and may not represent real hotels.
-
-## Features
 
 ### Guest Experience
 
