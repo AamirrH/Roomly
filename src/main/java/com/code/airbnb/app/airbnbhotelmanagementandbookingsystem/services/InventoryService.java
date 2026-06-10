@@ -3,11 +3,13 @@ package com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.services;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.DTOs.*;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Inventory;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Room;
+import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.HotelNotFoundException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.exceptions.RoomDoesNotExistException;
 import com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.repositories.InventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -72,6 +74,9 @@ public class InventoryService {
     }
      //Customer Service Method
     public Page<HotelResponseDTO> searchHotels(String city, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms, Pageable pageable) {
+        if(checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now())) {
+            throw new HotelNotFoundException("Invalid Check-In or Check-out Dates");
+        }
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return inventoryRepository.findAvailableHotels(city, checkInDate, checkOutDate, numberOfRooms, totalDays, pageable)
                 .map(hotel -> mapHotelWithEstimatedStartingPrice(hotel, checkInDate, checkOutDate, numberOfRooms));
@@ -79,6 +84,9 @@ public class InventoryService {
 
 
     public List<RoomResponseDTO> getAvailableRoomsForHotel(Long hotelId, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms) {
+        if(checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now())) {
+            throw new HotelNotFoundException("Invalid Check-In or Check-out Dates");
+        }
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return inventoryRepository.findAvailableRoomsForHotel(hotelId, checkInDate, checkOutDate, numberOfRooms, totalDays)
                 .stream()
