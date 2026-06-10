@@ -74,9 +74,7 @@ public class InventoryService {
     }
      //Customer Service Method
     public Page<HotelResponseDTO> searchHotels(String city, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms, Pageable pageable) {
-        if(checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now())) {
-            throw new HotelNotFoundException("Invalid Check-In or Check-out Dates");
-        }
+        validateSearchDates(checkInDate, checkOutDate);
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return inventoryRepository.findAvailableHotels(city, checkInDate, checkOutDate, numberOfRooms, totalDays, pageable)
                 .map(hotel -> mapHotelWithEstimatedStartingPrice(hotel, checkInDate, checkOutDate, numberOfRooms));
@@ -84,14 +82,24 @@ public class InventoryService {
 
 
     public List<RoomResponseDTO> getAvailableRoomsForHotel(Long hotelId, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms) {
-        if(checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now())) {
-            throw new HotelNotFoundException("Invalid Check-In or Check-out Dates");
-        }
+        validateSearchDates(checkInDate, checkOutDate);
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
         return inventoryRepository.findAvailableRoomsForHotel(hotelId, checkInDate, checkOutDate, numberOfRooms, totalDays)
                 .stream()
                 .map(room -> mapRoomWithEstimatedPrice(room, hotelId, checkInDate, checkOutDate, numberOfRooms, totalDays))
                 .collect(Collectors.toList());
+    }
+
+    private void validateSearchDates(LocalDate checkInDate, LocalDate checkOutDate) {
+        if (checkInDate == null || checkOutDate == null) {
+            throw new IllegalArgumentException("Check-in and check-out dates are required");
+        }
+        if (checkInDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Check-in date cannot be in the past");
+        }
+        if (!checkOutDate.isAfter(checkInDate)) {
+            throw new IllegalArgumentException("Check-out date must be after check-in date");
+        }
     }
 
     private RoomResponseDTO mapRoomWithEstimatedPrice(Room room, Long hotelId, LocalDate checkInDate,

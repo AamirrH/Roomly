@@ -216,16 +216,19 @@ function HotelCardSkeleton() {
 }
 
 function SearchBar({ query, updateQuery, onSubmit, compact = false }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const checkoutMin = query.checkInDate && query.checkInDate > today ? query.checkInDate : today;
+
   return (
     <form className={compact ? "searchbar compact" : "searchbar"} onSubmit={onSubmit}>
       <Field icon={MapPin} label="Destination">
         <input name="city" value={query.city} onChange={updateQuery} placeholder="Where to next?" />
       </Field>
       <Field icon={CalendarDays} label="Check-in">
-        <input name="checkInDate" value={query.checkInDate} onChange={updateQuery} type="date" />
+        <input min={today} name="checkInDate" value={query.checkInDate} onChange={updateQuery} type="date" />
       </Field>
       <Field icon={CalendarDays} label="Check-out">
-        <input name="checkOutDate" value={query.checkOutDate} onChange={updateQuery} type="date" />
+        <input min={checkoutMin} name="checkOutDate" value={query.checkOutDate} onChange={updateQuery} type="date" />
       </Field>
       <Field icon={BedDouble} label="Rooms">
         <input min="1" name="numberOfRooms" value={query.numberOfRooms} onChange={updateQuery} type="number" />

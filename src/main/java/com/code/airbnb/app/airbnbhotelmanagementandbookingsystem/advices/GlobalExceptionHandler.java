@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
@@ -85,6 +86,17 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .findFirst()
                 .orElse("Invalid request");
+
+        CustomExceptionError validationError = new CustomExceptionError(HttpStatus.BAD_REQUEST, message, LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    private ResponseEntity<CustomExceptionError> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String message = "Invalid value for " + ex.getName();
+        if (ex.getRequiredType() != null) {
+            message += ". Expected " + ex.getRequiredType().getSimpleName();
+        }
 
         CustomExceptionError validationError = new CustomExceptionError(HttpStatus.BAD_REQUEST, message, LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);

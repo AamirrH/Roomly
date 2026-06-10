@@ -48,7 +48,6 @@ import "./styles.css";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
 const ACCESS_TOKEN_KEY = "roomlyAccessToken";
 const USER_KEY = "roomlyUser";
-const API_CHECK_PATH = "/roomly/api/v1/hotels/search?checkInDate=2026-05-20&checkOutDate=2026-05-23&numberOfRooms=1&pageNumber=0&pageSize=1";
 const HOTEL_RESULTS_PAGE_SIZE = 9;
 const VIEW_HASH = {
   home: "",
@@ -68,6 +67,49 @@ function viewFromHash() {
 function hashForView(view) {
   const hash = VIEW_HASH[view] || "";
   return hash ? `#/${hash}` : "#/";
+}
+
+function isoDateAfter(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function defaultQuery() {
+  return {
+    city: "",
+    checkInDate: isoDateAfter(1),
+    checkOutDate: isoDateAfter(4),
+    numberOfRooms: 1
+  };
+}
+
+function isValidDateValue(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+}
+
+function normalizeSearchQuery(searchQuery) {
+  const fallback = defaultQuery();
+  const checkInDate = isValidDateValue(searchQuery.checkInDate) ? searchQuery.checkInDate : fallback.checkInDate;
+  let checkOutDate = isValidDateValue(searchQuery.checkOutDate) ? searchQuery.checkOutDate : fallback.checkOutDate;
+
+  if (checkOutDate <= checkInDate) {
+    const nextCheckout = new Date(`${checkInDate}T00:00:00`);
+    nextCheckout.setDate(nextCheckout.getDate() + 1);
+    checkOutDate = nextCheckout.toISOString().slice(0, 10);
+  }
+
+  return {
+    ...searchQuery,
+    checkInDate,
+    checkOutDate,
+    numberOfRooms: Math.max(1, Number(searchQuery.numberOfRooms || 1))
+  };
+}
+
+function apiCheckPath() {
+  const query = defaultQuery();
+  return `/roomly/api/v1/hotels/search?checkInDate=${query.checkInDate}&checkOutDate=${query.checkOutDate}&numberOfRooms=1&pageNumber=0&pageSize=1`;
 }
 
 function parseJwtPayload(token) {
@@ -146,12 +188,7 @@ function App() {
       return null;
     }
   });
-  const [query, setQuery] = React.useState({
-    city: "",
-    checkInDate: "Add Date",
-    checkOutDate: "Add Date",
-    numberOfRooms: 1
-  });
+  const [query, setQuery] = React.useState(defaultQuery);
   const [hotels, setHotels] = React.useState(fallbackHotels);
   const [hotelResults, setHotelResults] = React.useState(fallbackHotels);
   const [hotelPage, setHotelPage] = React.useState({
@@ -208,7 +245,7 @@ function App() {
 
     async function checkBackend() {
       try {
-        const response = await fetch(`${API_BASE}${API_CHECK_PATH}`, {
+        const response = await fetch(`${API_BASE}${apiCheckPath()}`, {
           headers: { "Content-Type": "application/json" },
           signal: controller.signal
         });
@@ -359,15 +396,16 @@ function App() {
   }
 
   async function fetchHotelPage(pageNumber, pageSize, searchQuery = query) {
+    const safeQuery = normalizeSearchQuery(searchQuery);
     const params = new URLSearchParams({
-      checkInDate: searchQuery.checkInDate,
-      checkOutDate: searchQuery.checkOutDate,
-      numberOfRooms: searchQuery.numberOfRooms,
+      checkInDate: safeQuery.checkInDate,
+      checkOutDate: safeQuery.checkOutDate,
+      numberOfRooms: safeQuery.numberOfRooms,
       pageNumber,
       pageSize
     });
-    if (searchQuery.city?.trim()) {
-      params.set("city", searchQuery.city.trim());
+    if (safeQuery.city?.trim()) {
+      params.set("city", safeQuery.city.trim());
     }
 
     const page = await request(`/roomly/api/v1/hotels/search?${params.toString()}`);
@@ -380,8 +418,10 @@ function App() {
 
   async function searchHotels(event, pageNumber = 0, pageSize = HOTEL_RESULTS_PAGE_SIZE, searchQuery = query) {
     event?.preventDefault();
+    const safeQuery = normalizeSearchQuery(searchQuery);
+    setQuery(safeQuery);
     goToView("hotels");
-    const cacheKey = hotelSearchCacheKey(searchQuery, pageSize);
+    const cacheKey = hotelSearchCacheKey(safeQuery, pageSize);
     const cachedHotels = hotelSearchCache.current.get(cacheKey);
 
     if (cachedHotels) {
@@ -400,17 +440,17 @@ function App() {
       totalElements: 0
     });
     try {
-      const firstPage = await fetchHotelPage(0, pageSize, searchQuery);
+      const firstPage = await fetchHotelPage(0, pageSize, safeQuery);
       const totalPagesFromBackend = firstPage.metadata.totalPages || 1;
       const discoveredPages = Math.max(totalPagesFromBackend, firstPage.content.length === pageSize ? 2 : 1);
       const remainingPageNumbers = Array.from({ length: Math.max(discoveredPages - 1, 0) }, (_, index) => index + 1);
-      const remainingPages = await Promise.all(remainingPageNumbers.map((nextPage) => fetchHotelPage(nextPage, pageSize, searchQuery)));
+      const remainingPages = await Promise.all(remainingPageNumbers.map((nextPage) => fetchHotelPage(nextPage, pageSize, safeQuery)));
       let allHotels = [firstPage, ...remainingPages].flatMap((page) => page.content);
 
       // If backend metadata says one page but page 2 still has data, keep walking until empty.
       let nextPage = discoveredPages;
       while (totalPagesFromBackend <= 1 && remainingPages.at(-1)?.content?.length === pageSize && nextPage < 50) {
-        const extraPage = await fetchHotelPage(nextPage, pageSize, searchQuery);
+        const extraPage = await fetchHotelPage(nextPage, pageSize, safeQuery);
         if (!extraPage.content.length) break;
         allHotels = allHotels.concat(extraPage.content);
         nextPage += 1;
