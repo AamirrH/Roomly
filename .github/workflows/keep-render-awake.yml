@@ -1,8 +1,8 @@
-name: KRBA
+name: keep-render-awake
 
-"on":
+on:
   schedule:
-    - cron: "3-59/5 * * * *"
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -11,10 +11,6 @@ permissions:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-
     steps:
       - name: Ping Roomly health endpoint
-        run: |
-          curl --fail --silent --show-error --max-time 20 \
-            "https://roomly-bcjb.onrender.com/roomly/api/v1/health"
+        run: curl https://roomly-bcjb.onrender.com/roomly/api/v1/health
