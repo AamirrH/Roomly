@@ -12,11 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Book;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -36,7 +34,8 @@ public class GuestSearchControllers {
                                                                 @RequestParam(required = false) LocalDate checkOutDate,
                                                                 @RequestParam(required = false) Integer numberOfRooms,
                                                                 @RequestParam(defaultValue = "0") Integer pageNumber,
-                                                                @RequestParam(defaultValue = "10") Integer pageSize){
+                                                                @RequestParam(defaultValue = "10") Integer pageSize
+                                                               ) {
         Pageable pageable = PageRequest.of(pageNumber,pageSize);
         return ResponseEntity.ok(inventoryService.searchHotels(city,checkInDate,checkOutDate,numberOfRooms,pageable));
     }

@@ -190,12 +190,17 @@ function App() {
   });
   const [query, setQuery] = React.useState(defaultQuery);
   const [hotels, setHotels] = React.useState(fallbackHotels);
+  const [rawHotelResults, setRawHotelResults] = React.useState(fallbackHotels);
   const [hotelResults, setHotelResults] = React.useState(fallbackHotels);
   const [hotelPage, setHotelPage] = React.useState({
     number: 0,
     size: HOTEL_RESULTS_PAGE_SIZE,
     totalPages: 1,
     totalElements: fallbackHotels.length
+  });
+  const [hotelSort, setHotelSort] = React.useState("recommended");
+  const [hotelFilters, setHotelFilters] = React.useState({
+    amenities: []
   });
   const [rooms, setRooms] = React.useState(fallbackRooms);
   const [bookings, setBookings] = React.useState(sampleBookings);
@@ -323,7 +328,8 @@ function App() {
           body: JSON.stringify({
             username: form.username,
             email: form.email,
-            password: form.password
+            password: form.password,
+            role: form.role
           })
         });
       }
@@ -346,7 +352,7 @@ function App() {
       });
       window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
       setAuthUser(nextUser);
-      notify(mode === "signup" ? "Welcome to Roomly. Your guest account is ready." : "Welcome back. Your session is ready.");
+      notify(mode === "signup" ? `Welcome to Roomly. Your ${isManagerUser(nextUser) ? "manager" : "guest"} account is ready.` : "Welcome back. Your session is ready.");
       goToView(isManagerUser(nextUser) ? "manager" : "home", { replace: true });
     } catch (error) {
       notify(error?.message || (mode === "signup" ? "Signup failed. Check your details and try again." : "Login failed. Check your credentials."));
@@ -381,17 +387,68 @@ function App() {
     });
   }
 
-  function applyHotelResults(allHotels, pageNumber, pageSize) {
+  function priceValue(hotel) {
+    const value = Number(hotel?.estimatedStartingPrice);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  function amenityMatches(hotelAmenities = [], selectedAmenity) {
+    const needle = selectedAmenity.toLowerCase();
+    return hotelAmenities.some((amenity) => String(amenity).toLowerCase().includes(needle));
+  }
+
+  function filterHotelList(hotelList, filters = hotelFilters) {
+    return hotelList.filter((hotel) => {
+      const amenitiesMatch = !filters.amenities.length || filters.amenities.every((amenity) => amenityMatches(hotel.amenities || [], amenity));
+
+      return amenitiesMatch;
+    });
+  }
+
+  function sortHotelList(hotelList, sortMode = hotelSort) {
+    const copy = [...hotelList];
+
+    if (sortMode === "priceLowHigh") {
+      return copy.sort((a, b) => {
+        const aPrice = priceValue(a);
+        const bPrice = priceValue(b);
+        if (aPrice === null) return 1;
+        if (bPrice === null) return -1;
+        return aPrice - bPrice;
+      });
+    }
+
+    if (sortMode === "priceHighLow") {
+      return copy.sort((a, b) => {
+        const aPrice = priceValue(a);
+        const bPrice = priceValue(b);
+        if (aPrice === null) return 1;
+        if (bPrice === null) return -1;
+        return bPrice - aPrice;
+      });
+    }
+
+    if (sortMode === "name") {
+      return copy.sort((a, b) => displayHotelName(a).localeCompare(displayHotelName(b)));
+    }
+
+    return copy;
+  }
+
+  function applyHotelResults(allHotels, pageNumber, pageSize, sortMode = hotelSort, filters = hotelFilters) {
+    const filteredHotels = filterHotelList(allHotels, filters);
+    const sortedHotels = sortHotelList(filteredHotels, sortMode);
     const metadata = {
       number: pageNumber,
       size: pageSize,
-      totalPages: Math.max(Math.ceil(allHotels.length / pageSize), 1),
-      totalElements: allHotels.length
+      totalPages: Math.max(Math.ceil(sortedHotels.length / pageSize), 1),
+      totalElements: sortedHotels.length
     };
-    setHotelResults(allHotels);
-    setHotels(allHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize));
+    setRawHotelResults(allHotels);
+    setHotelResults(sortedHotels);
+    setHotels(sortedHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize));
     setHotelPage(metadata);
-    noteApiSuccess(allHotels);
+    noteApiSuccess(sortedHotels);
     return metadata;
   }
 
@@ -432,6 +489,7 @@ function App() {
 
     setLoading(true);
     setHotels([]);
+    setRawHotelResults([]);
     setHotelResults([]);
     setHotelPage({
       number: 0,
@@ -469,6 +527,7 @@ function App() {
       if (!allHotels.length) notify("No live stays returned for these dates.");
     } catch (error) {
       noteApiFailure(error);
+      setRawHotelResults(fallbackHotels);
       setHotelResults(fallbackHotels);
       setHotels(fallbackHotels);
       setHotelPage({
@@ -491,6 +550,32 @@ function App() {
       ...current,
       number: boundedPage
     }));
+  }
+
+  function changeHotelSort(nextSort) {
+    setHotelSort(nextSort);
+    setLoading(true);
+
+    window.setTimeout(() => {
+      const pageSize = hotelPage.size || HOTEL_RESULTS_PAGE_SIZE;
+      applyHotelResults(rawHotelResults, 0, pageSize, nextSort, hotelFilters);
+      setLoading(false);
+    }, 240);
+  }
+
+  function changeHotelFilters(nextFilters) {
+    const mergedFilters = {
+      ...hotelFilters,
+      ...nextFilters
+    };
+    setHotelFilters(mergedFilters);
+    setLoading(true);
+
+    window.setTimeout(() => {
+      const pageSize = hotelPage.size || HOTEL_RESULTS_PAGE_SIZE;
+      applyHotelResults(rawHotelResults, 0, pageSize, hotelSort, mergedFilters);
+      setLoading(false);
+    }, 240);
   }
 
   function applyRefineSearch(nextQuery) {
@@ -723,7 +808,7 @@ function App() {
       />
       {loading && <div className="loading-strip">Curating your request</div>}
       {view === "home" && <Landing query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
-      {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} applyRefineSearch={applyRefineSearch} changePage={changeHotelPage} openHotel={openHotel} loading={loading} />}
+      {view === "hotels" && <SearchResults hotels={hotels} page={hotelPage} query={query} updateQuery={updateQuery} searchHotels={searchHotels} applyRefineSearch={applyRefineSearch} changePage={changeHotelPage} changeSort={changeHotelSort} selectedSort={hotelSort} filters={hotelFilters} changeFilters={changeHotelFilters} openHotel={openHotel} loading={loading} />}
       {view === "detail" && <HotelDetail hotel={selectedHotel} rooms={rooms} query={query} navigate={navigate} selectRoom={selectRoom} bookingBlocked={authUser && !isGuestUser(authUser)} />}
       {view === "bookings" && (isGuestUser(authUser) ? <MyBookings bookings={bookings} navigate={navigate} onCancelBooking={cancelBooking} /> : <AccessPanel title="Guest account required" text="Bookings are attached to guest accounts. Sign in as a guest to view reservations." action="Sign In" onAction={() => openAuth("login")} />)}
       {view === "manager" && (isManagerUser(authUser) ? <AdminDashboard authUser={authUser} request={request} roleLabel={roleLabel} /> : <AccessPanel title="Manager access required" text="The hotel operations console is visible only to hotel managers and Roomly admins." action="Sign In" onAction={() => openAuth("login")} />)}
@@ -746,7 +831,7 @@ function App() {
         />
       )}
       {toast && <Toast message={toast} />}
-      {view !== "manager" && <Footer authUser={authUser} />}
+      {view !== "manager" && <Footer authUser={authUser} navigate={navigate} openAuth={openAuth} searchHotels={searchHotels} />}
     </div>
   );
 }
@@ -841,7 +926,8 @@ function AuthPage({ mode, setMode, onSubmit }) {
   const [signupForm, setSignupForm] = React.useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
+    role: "USER"
   });
   const form = isSignup ? signupForm : loginForm;
 
@@ -888,15 +974,45 @@ function AuthPage({ mode, setMode, onSubmit }) {
           </p>
 
           {isSignup && (
-            <Field icon={UserRound} label="Username">
-              <input
-                name="username"
-                value={form.username}
-                onChange={update}
-                placeholder="aamir_roomly"
-                required
-              />
-            </Field>
+            <>
+              <div className="account-intent">
+                <span>What do you want to do?</span>
+                <div>
+                  <label className={form.role === "USER" ? "active" : ""}>
+                    <input
+                      checked={form.role === "USER"}
+                      name="role"
+                      onChange={update}
+                      type="radio"
+                      value="USER"
+                    />
+                    <strong>I want to book a hotel</strong>
+                    <small>Guest account for stays and reservations.</small>
+                  </label>
+                  <label className={form.role === "HOTEL_MANAGER" ? "active" : ""}>
+                    <input
+                      checked={form.role === "HOTEL_MANAGER"}
+                      name="role"
+                      onChange={update}
+                      type="radio"
+                      value="HOTEL_MANAGER"
+                    />
+                    <strong>I want to manage a property</strong>
+                    <small>Manager account for hotel operations.</small>
+                  </label>
+                </div>
+              </div>
+
+              <Field icon={UserRound} label="Username">
+                <input
+                  name="username"
+                  value={form.username}
+                  onChange={update}
+                  placeholder="aamir_roomly"
+                  required
+                />
+              </Field>
+            </>
           )}
 
           <Field icon={UserRound} label="Email">
@@ -927,7 +1043,7 @@ function AuthPage({ mode, setMode, onSubmit }) {
 
           <div className="auth-footnote">
             <ShieldCheck size={15} />
-            <span>{isSignup ? "Public signup creates a guest account. Manager accounts are issued by Roomly administrators." : "Access tokens are stored locally for protected API calls."}</span>
+            <span>{isSignup ? "Choose a guest account for bookings or a manager account for property operations." : "Access tokens are stored locally for protected API calls."}</span>
           </div>
         </form>
       </section>
@@ -965,12 +1081,30 @@ function ConfirmDialog({ booking, loading, onClose, onConfirm }) {
   );
 }
 
-function Footer({ authUser }) {
+function Footer({ authUser, navigate, openAuth, searchHotels }) {
   const columns = [
-    ["Company", "Brand", "Our Story", "Careers", "Press"],
+    [
+      "Explore",
+      { label: "Home", action: () => navigate("home") },
+      { label: "Live Hotels", action: searchHotels },
+      { label: "Book Now", action: searchHotels },
+      { label: "Sign In", action: () => openAuth("login") }
+    ],
     ...(isManagerUser(authUser)
-      ? [["For Managers", "Partner Portal", "Management Tools", "Inventory", "Reports"]]
-      : [["For Guests", "Collections", "Concierge", "Member Perks", "Support"]])
+      ? [[
+          "For Managers",
+          { label: "Manager Console", action: () => navigate("manager") },
+          { label: "Browse Hotels", action: searchHotels },
+          { label: "Home", action: () => navigate("home") },
+          { label: "Sign Out From Navbar", action: () => window.scrollTo({ top: 0, behavior: "smooth" }) }
+        ]]
+      : [[
+          "For Guests",
+          { label: "Collections", action: searchHotels },
+          { label: "My Bookings", action: () => (authUser ? navigate("bookings") : openAuth("login")) },
+          { label: "Create Account", action: () => openAuth("signup") },
+          { label: "Support", action: () => window.location.assign("mailto:support@roomly.dev") }
+        ]])
   ];
 
   return (
@@ -979,10 +1113,14 @@ function Footer({ authUser }) {
         <h2>Roomly</h2>
         <p>Elevating the art of the stay through meticulous curation and live pricing.</p>
       </div>
-      {columns.map(([title, ...links]) => (
+      {columns.map(([title, ...items]) => (
         <div key={title}>
           <h3>{title}</h3>
-          {links.map((link) => <a href="#" key={link}>{link}</a>)}
+          {items.map((item) => (
+            <button key={item.label} onClick={item.action} type="button">
+              {item.label}
+            </button>
+          ))}
         </div>
       ))}
     </footer>

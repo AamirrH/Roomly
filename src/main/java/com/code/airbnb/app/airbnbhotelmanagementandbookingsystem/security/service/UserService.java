@@ -56,7 +56,7 @@ public class UserService implements UserDetailsService {
             user.setDisplayName(signupDTO.getUsername());
             user.setEmail(signupDTO.getEmail());
             user.setPassword(bCryptPasswordEncoder.encode(signupDTO.getPassword()));
-            user.setRoles(Set.of(Role.USER));
+            user.setRoles(Set.of(signupDTO.getRole() == null ? Role.USER : signupDTO.getRole()));
             // Save the user.
             userRepository.save(user);
             return new SignupResponseDTO(user.getDisplayName(), user.getEmail());

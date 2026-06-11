@@ -20,6 +20,127 @@ import {
 import { fallbackHotels, img } from "../data/roomlyContent";
 import { firstPhoto, money } from "../lib/display";
 
+const AVAILABLE_CITIES = [
+  "Mumbai",
+  "Goa",
+  "Jaipur",
+  "Bengaluru",
+  "Delhi",
+  "Hyderabad",
+  "Kolkata",
+  "Pune",
+  "Chennai",
+  "Kerala",
+  "Shimla",
+  "Udaipur",
+  "Kochi",
+  "Varanasi",
+  "Kutch",
+  "Leh",
+  "Puducherry",
+  "Manali",
+  "Alleppey",
+  "Gulmarg",
+  "Darjeeling",
+  "Jaisalmer"
+];
+
+const AMENITY_FILTERS = [
+  [Wifi, "WiFi"],
+  [Waves, "Pool"],
+  [Utensils, "Breakfast"],
+  [Dumbbell, "Gym"],
+  [Sparkles, "Spa"],
+  [ConciergeBell, "Butler"]
+];
+
+const ROOM_TYPE_COLLECTIONS = {
+  All: [
+    {
+      label: "Standard Heritage Room",
+      title: "Warm Comfort",
+      price: "INR 5,800 / night",
+      image: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=88",
+      size: "large"
+    },
+    {
+      label: "Deluxe Patio King",
+      title: "Private Terrace",
+      price: "INR 10,900 / night",
+      image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=88"
+    },
+    {
+      label: "Signature Sky Suite",
+      title: "Panoramic Stay",
+      price: "INR 21,400 / night",
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1000&q=88"
+    }
+  ],
+  Standard: [
+    {
+      label: "Classic Queen Room",
+      title: "Soft City Calm",
+      price: "INR 4,900 / night",
+      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=88",
+      size: "large"
+    },
+    {
+      label: "Compact Garden Room",
+      title: "Quiet Essentials",
+      price: "INR 5,400 / night",
+      image: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1000&q=88"
+    },
+    {
+      label: "Courtyard Twin",
+      title: "Clean Rest",
+      price: "INR 6,200 / night",
+      image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1000&q=88"
+    }
+  ],
+  Deluxe: [
+    {
+      label: "Deluxe Bay Room",
+      title: "Light Filled Escape",
+      price: "INR 9,800 / night",
+      image: "https://images.unsplash.com/photo-1590490359683-658d3d23f972?auto=format&fit=crop&w=1200&q=88",
+      size: "large"
+    },
+    {
+      label: "Premier Balcony King",
+      title: "Open Air Mornings",
+      price: "INR 12,600 / night",
+      image: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=1000&q=88"
+    },
+    {
+      label: "Club Deluxe Room",
+      title: "Lounge Ready",
+      price: "INR 14,200 / night",
+      image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=88"
+    }
+  ],
+  Suite: [
+    {
+      label: "Presidential Residence",
+      title: "Private Grandeur",
+      price: "INR 28,500 / night",
+      image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=88",
+      size: "large"
+    },
+    {
+      label: "Skyline Corner Suite",
+      title: "Evening Views",
+      price: "INR 24,800 / night",
+      image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1000&q=88"
+    },
+    {
+      label: "Garden Spa Suite",
+      title: "Slow Luxury",
+      price: "INR 19,700 / night",
+      image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1000&q=88"
+    }
+  ]
+};
+
 export function Landing({ query, updateQuery, searchHotels, openHotel }) {
   return (
     <main>
@@ -61,7 +182,7 @@ export function Landing({ query, updateQuery, searchHotels, openHotel }) {
   );
 }
 
-export function SearchResults({ hotels, page, query, updateQuery, searchHotels, applyRefineSearch, changePage, openHotel, loading }) {
+export function SearchResults({ hotels, page, query, updateQuery, searchHotels, applyRefineSearch, changePage, changeSort, selectedSort, filters, changeFilters, openHotel, loading }) {
   const currentPage = page?.number || 0;
   const totalPages = page?.totalPages || 1;
   const totalElements = page?.totalElements ?? hotels.length;
@@ -110,44 +231,29 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
               onChange={(event) => applyRefineSearch({ ...query, city: event.target.value })}
             >
               <option value="">All destinations</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Goa">Goa</option>
-              <option value="Jaipur">Jaipur</option>
-              <option value="Delhi">Delhi</option>
+              {AVAILABLE_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
             </select>
           </FilterBlock>
-          <FilterBlock label="Price per night">
-            <div className="range-copy"><span>INR 2,000</span><strong>INR 50,000</strong></div>
-            <input type="range" min="2000" max="50000" defaultValue="50000" disabled />
-          </FilterBlock>
-          <FilterBlock label="Star Rating">
-            {[5, 4].map((count) => (
-              <label className="check-line" key={count}>
-                <input type="checkbox" defaultChecked disabled />
-                <span>{Array.from({ length: count }).map((_, i) => <Star key={i} size={13} fill="currentColor" />)}</span>
-              </label>
-            ))}
-          </FilterBlock>
           <FilterBlock label="Amenities">
-            {[
-              [Wifi, "WiFi"],
-              [Waves, "Pool"],
-              [Utensils, "Breakfast"],
-              [Dumbbell, "Gym"]
-            ].map(([Icon, label]) => (
+            {AMENITY_FILTERS.map(([Icon, label]) => (
               <label className="check-line" key={label}>
-                <input type="checkbox" disabled />
+                <input
+                  checked={filters.amenities.includes(label)}
+                  onChange={(event) => {
+                    const nextAmenities = event.target.checked
+                      ? [...filters.amenities, label]
+                      : filters.amenities.filter((amenity) => amenity !== label);
+                    changeFilters({ amenities: nextAmenities });
+                  }}
+                  type="checkbox"
+                />
                 <span><Icon size={15} /> {label}</span>
               </label>
             ))}
           </FilterBlock>
-          <div className="membership-card">
-            <img src={img.bath} alt="Luxury concierge desk" />
-            <div>
-              <span>Membership</span>
-              <strong>Unlock exclusive member rates</strong>
-            </div>
-          </div>
+          <button className="soft-button filter-reset" onClick={() => changeFilters({ amenities: [] })} type="button">
+            Reset Filters
+          </button>
         </aside>
         <section className="results">
           <div className="results-head">
@@ -157,11 +263,11 @@ export function SearchResults({ hotels, page, query, updateQuery, searchHotels, 
             </div>
             <label className="sort-control">
               <span>Sort by:</span>
-              <select defaultValue="Recommended">
-                <option>Recommended</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Star Rating</option>
+              <select value={selectedSort} onChange={(event) => changeSort(event.target.value)}>
+                <option value="recommended">Recommended</option>
+                <option value="priceLowHigh">Price: Low to High</option>
+                <option value="priceHighLow">Price: High to Low</option>
+                <option value="name">Hotel Name</option>
               </select>
             </label>
           </div>
@@ -222,7 +328,10 @@ function SearchBar({ query, updateQuery, onSubmit, compact = false }) {
   return (
     <form className={compact ? "searchbar compact" : "searchbar"} onSubmit={onSubmit}>
       <Field icon={MapPin} label="Destination">
-        <input name="city" value={query.city} onChange={updateQuery} placeholder="Where to next?" />
+        <select name="city" value={query.city} onChange={updateQuery}>
+          <option value="">All destinations</option>
+          {AVAILABLE_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+        </select>
       </Field>
       <Field icon={CalendarDays} label="Check-in">
         <input min={today} name="checkInDate" value={query.checkInDate} onChange={updateQuery} type="date" />
@@ -314,8 +423,8 @@ function HowItWorks() {
   const steps = [
     ["01", Search, "Curated Selection", "Browse live availability from hotels configured in your backend."],
     ["02", CalendarDays, "Instant Booking", "Choose dates, room count, and rooms with availability checks."],
-    ["03", ConciergeBell, "Dynamic Pricing", "Urgency, occupancy, surge, and holidays shape the quote."],
-    ["04", ShieldCheck, "Inventory Lock", "Pessimistic locking protects reservations from double booking."]
+    ["03", ConciergeBell, "World Class Amenities", "Enjoy the pinnacle of luxury with world class amenities."],
+    ["04", ShieldCheck, "Secure Transactions", "Pay with a wide variety of global and secure payment providers"]
   ];
 
   return (
@@ -337,24 +446,31 @@ function HowItWorks() {
 }
 
 function RoomTypes() {
-  const cards = [
-    ["The Presidential Suite", "Unparalleled Luxury at New Heights", "INR 18,400 / night", img.roomB, "large"],
-    ["The Heritage Room", "Classic Elegance", "INR 8,200 / night", img.roomA, ""],
-    ["The Garden Terrace", "Nature Infused", "INR 12,800 / night", img.roomC, ""]
-  ];
+  const [selectedType, setSelectedType] = React.useState("All");
+  const cards = ROOM_TYPE_COLLECTIONS[selectedType];
 
   return (
     <section className="room-types">
       <div className="room-types-head">
         <SectionHeader eyebrow="Refined spaces" title={<>Signature <em>Living</em></>} />
         <div className="tabs">
-          {["All", "Standard", "Deluxe", "Suite"].map((tab, index) => <button className={index === 0 ? "active" : ""} key={tab}>{tab}</button>)}
+          {Object.keys(ROOM_TYPE_COLLECTIONS).map((tab) => (
+            <button
+              aria-pressed={selectedType === tab}
+              className={selectedType === tab ? "active" : ""}
+              key={tab}
+              onClick={() => setSelectedType(tab)}
+              type="button"
+            >
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
       <div className="asymmetric-grid">
-        {cards.map(([label, title, price, image, size]) => (
-          <article className={size === "large" ? "room-type-card large" : "room-type-card"} key={label}>
-            <img src={image} alt={label} />
+        {cards.map(({ label, title, price, image, size }) => (
+          <article className={size === "large" ? "room-type-card large" : "room-type-card"} key={`${selectedType}-${label}`}>
+            <img loading="lazy" src={image} alt={label} />
             <div>
               <span>{label}</span>
               <h3>{title}</h3>
