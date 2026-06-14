@@ -19,7 +19,9 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -75,8 +77,17 @@ public class InventoryService {
     public Page<HotelResponseDTO> searchHotels(String city, LocalDate checkInDate, LocalDate checkOutDate, Integer numberOfRooms, Pageable pageable) {
         validateSearchDates(checkInDate, checkOutDate);
         Long totalDays = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-        return inventoryRepository.findAvailableHotels(city, checkInDate, checkOutDate, numberOfRooms, totalDays, pageable)
-                .map(hotel -> mapHotelWithEstimatedStartingPrice(hotel, checkInDate, checkOutDate, numberOfRooms));
+        Page<com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel> hotelPage =
+                inventoryRepository.findAvailableHotels(city, checkInDate, checkOutDate, numberOfRooms, totalDays, pageable);
+        Map<Long, BigDecimal> startingPrices = findStartingPricesForHotels(
+                hotelPage.getContent().stream().map(com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel::getId).toList(),
+                checkInDate,
+                checkOutDate,
+                numberOfRooms,
+                totalDays
+        );
+
+        return hotelPage.map(hotel -> mapHotelWithStartingPrice(hotel, startingPrices.get(hotel.getId())));
     }
 
 
@@ -127,20 +138,53 @@ public class InventoryService {
         return roomResponseDTO;
     }
 
-    private HotelResponseDTO mapHotelWithEstimatedStartingPrice(com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel hotel,
-                                                                LocalDate checkInDate,
-                                                                LocalDate checkOutDate,
-                                                                Integer numberOfRooms) {
-        HotelResponseDTO hotelResponseDTO = modelMapper.map(hotel, HotelResponseDTO.class);
+    private Map<Long, BigDecimal> findStartingPricesForHotels(List<Long> hotelIds,
+                                                              LocalDate checkInDate,
+                                                              LocalDate checkOutDate,
+                                                              Integer numberOfRooms,
+                                                              Long totalDays) {
+        if (hotelIds.isEmpty()) {
+            return Map.of();
+        }
 
-        getAvailableRoomsForHotel(hotel.getId(), checkInDate, checkOutDate, numberOfRooms)
+        Map<HotelRoomKey, List<Inventory>> inventoriesByRoom = inventoryRepository
+                .findAvailableInventoriesForHotels(hotelIds, checkInDate, checkOutDate, numberOfRooms)
                 .stream()
-                .map(RoomResponseDTO::getEstimatedTotalPrice)
-                .filter(price -> price != null)
-                .min(Comparator.naturalOrder())
-                .ifPresent(hotelResponseDTO::setEstimatedStartingPrice);
+                .collect(Collectors.groupingBy(inventory -> new HotelRoomKey(
+                        inventory.getHotel().getId(),
+                        inventory.getRoom().getId()
+                )));
 
+        Map<Long, BigDecimal> startingPricesByHotel = new HashMap<>();
+
+        inventoriesByRoom.forEach((hotelRoomKey, inventories) -> {
+            if (inventories.size() != totalDays.intValue()) {
+                return;
+            }
+
+            BigDecimal roomTotal = inventories.stream()
+                    .map(pricingService::calculateFinalPrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .multiply(BigDecimal.valueOf(numberOfRooms));
+
+            startingPricesByHotel.merge(
+                    hotelRoomKey.hotelId(),
+                    roomTotal,
+                    BigDecimal::min
+            );
+        });
+
+        return startingPricesByHotel;
+    }
+
+    private HotelResponseDTO mapHotelWithStartingPrice(com.code.airbnb.app.airbnbhotelmanagementandbookingsystem.entities.Hotel hotel,
+                                                       BigDecimal estimatedStartingPrice) {
+        HotelResponseDTO hotelResponseDTO = modelMapper.map(hotel, HotelResponseDTO.class);
+        hotelResponseDTO.setEstimatedStartingPrice(estimatedStartingPrice);
         return hotelResponseDTO;
+    }
+
+    private record HotelRoomKey(Long hotelId, Long roomId) {
     }
 
     private InventoryResponseDTO mapInventory(Inventory inventory) {

@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BookingService {
+
+    private static final BigDecimal GST_RATE = BigDecimal.valueOf(0.18);
 
     private final InventoryService inventoryService;
     private final PricingService pricingService;
@@ -77,6 +80,9 @@ public class BookingService {
             finalStrategicPrice = finalStrategicPrice.add(pricingService.calculateFinalPrice(inventory));
         }
         finalStrategicPrice = finalStrategicPrice.multiply(BigDecimal.valueOf(numberOfRooms));
+        BigDecimal finalPriceWithGst = finalStrategicPrice
+                .multiply(BigDecimal.ONE.add(GST_RATE))
+                .setScale(2, RoundingMode.HALF_UP);
 
         // Reserve the rooms
         for(Inventory inventory : availableRooms){
@@ -95,7 +101,7 @@ public class BookingService {
                 .hotel(hotel)
                 .room(room)
                 .user(user)
-                .finalCalculatedPrice(finalStrategicPrice)
+                .finalCalculatedPrice(finalPriceWithGst)
                 .roomsCount(numberOfRooms).build();
         bookingRepository.save(booking);
         return modelMapper.map(booking, BookingResponseDTO.class);

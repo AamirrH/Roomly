@@ -48,7 +48,7 @@ import "./styles.css";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
 const ACCESS_TOKEN_KEY = "roomlyAccessToken";
 const USER_KEY = "roomlyUser";
-const HOTEL_RESULTS_PAGE_SIZE = 9;
+const HOTEL_RESULTS_PAGE_SIZE = 6;
 const VIEW_HASH = {
   home: "",
   hotels: "hotels",
@@ -377,12 +377,13 @@ function App() {
     }));
   }
 
-  function hotelSearchCacheKey(searchQuery, pageSize) {
+  function hotelSearchCacheKey(searchQuery, pageNumber, pageSize) {
     return JSON.stringify({
       city: searchQuery.city?.trim() || "",
       checkInDate: searchQuery.checkInDate,
       checkOutDate: searchQuery.checkOutDate,
       numberOfRooms: Number(searchQuery.numberOfRooms || 1),
+      pageNumber,
       pageSize
     });
   }
@@ -435,21 +436,20 @@ function App() {
     return copy;
   }
 
-  function applyHotelResults(allHotels, pageNumber, pageSize, sortMode = hotelSort, filters = hotelFilters) {
-    const filteredHotels = filterHotelList(allHotels, filters);
+  function applyHotelResults(pageHotels, metadata, sortMode = hotelSort, filters = hotelFilters) {
+    const filteredHotels = filterHotelList(pageHotels, filters);
     const sortedHotels = sortHotelList(filteredHotels, sortMode);
-    const metadata = {
-      number: pageNumber,
-      size: pageSize,
-      totalPages: Math.max(Math.ceil(sortedHotels.length / pageSize), 1),
-      totalElements: sortedHotels.length
+    const nextMetadata = {
+      ...metadata,
+      totalElements: filters.amenities.length ? sortedHotels.length : metadata.totalElements,
+      totalPages: filters.amenities.length ? 1 : metadata.totalPages
     };
-    setRawHotelResults(allHotels);
+    setRawHotelResults(pageHotels);
     setHotelResults(sortedHotels);
-    setHotels(sortedHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize));
-    setHotelPage(metadata);
+    setHotels(sortedHotels);
+    setHotelPage(nextMetadata);
     noteApiSuccess(sortedHotels);
-    return metadata;
+    return nextMetadata;
   }
 
   async function fetchHotelPage(pageNumber, pageSize, searchQuery = query) {
@@ -469,7 +469,7 @@ function App() {
     const content = responseItems(page);
     return {
       content,
-      metadata: pageInfo(page, { number: pageNumber, size: pageSize, totalElements: content.length })
+      metadata: pageInfo(page, { number: pageNumber, size: pageSize, totalElements: content.length, totalPages: 1 })
     };
   }
 
@@ -478,11 +478,11 @@ function App() {
     const safeQuery = normalizeSearchQuery(searchQuery);
     setQuery(safeQuery);
     goToView("hotels");
-    const cacheKey = hotelSearchCacheKey(safeQuery, pageSize);
-    const cachedHotels = hotelSearchCache.current.get(cacheKey);
+    const cacheKey = hotelSearchCacheKey(safeQuery, pageNumber, pageSize);
+    const cachedPage = hotelSearchCache.current.get(cacheKey);
 
-    if (cachedHotels) {
-      applyHotelResults(cachedHotels, pageNumber, pageSize);
+    if (cachedPage) {
+      applyHotelResults(cachedPage.content, cachedPage.metadata);
       setMenuOpen(false);
       return;
     }
@@ -498,33 +498,18 @@ function App() {
       totalElements: 0
     });
     try {
-      const firstPage = await fetchHotelPage(0, pageSize, safeQuery);
-      const totalPagesFromBackend = firstPage.metadata.totalPages || 1;
-      const discoveredPages = Math.max(totalPagesFromBackend, firstPage.content.length === pageSize ? 2 : 1);
-      const remainingPageNumbers = Array.from({ length: Math.max(discoveredPages - 1, 0) }, (_, index) => index + 1);
-      const remainingPages = await Promise.all(remainingPageNumbers.map((nextPage) => fetchHotelPage(nextPage, pageSize, safeQuery)));
-      let allHotels = [firstPage, ...remainingPages].flatMap((page) => page.content);
-
-      // If backend metadata says one page but page 2 still has data, keep walking until empty.
-      let nextPage = discoveredPages;
-      while (totalPagesFromBackend <= 1 && remainingPages.at(-1)?.content?.length === pageSize && nextPage < 50) {
-        const extraPage = await fetchHotelPage(nextPage, pageSize, safeQuery);
-        if (!extraPage.content.length) break;
-        allHotels = allHotels.concat(extraPage.content);
-        nextPage += 1;
-      }
-
-      hotelSearchCache.current.set(cacheKey, allHotels);
-      const metadata = applyHotelResults(allHotels, pageNumber, pageSize);
+      const requestedPage = await fetchHotelPage(pageNumber, pageSize, safeQuery);
+      hotelSearchCache.current.set(cacheKey, requestedPage);
+      const metadata = applyHotelResults(requestedPage.content, requestedPage.metadata);
 
       if (import.meta.env.DEV) {
         console.info("Roomly hotel search page", {
           requestedPage: pageNumber,
-          returnedItems: allHotels.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize).length,
+          returnedItems: requestedPage.content.length,
           metadata
         });
       }
-      if (!allHotels.length) notify("No live stays returned for these dates.");
+      if (!requestedPage.content.length) notify("No live stays returned for these dates.");
     } catch (error) {
       noteApiFailure(error);
       setRawHotelResults(fallbackHotels);
@@ -545,11 +530,7 @@ function App() {
   function changeHotelPage(nextPage) {
     const boundedPage = Math.max(0, Math.min(nextPage, Math.max(hotelPage.totalPages - 1, 0)));
     const pageSize = hotelPage.size || HOTEL_RESULTS_PAGE_SIZE;
-    setHotels(hotelResults.slice(boundedPage * pageSize, boundedPage * pageSize + pageSize));
-    setHotelPage((current) => ({
-      ...current,
-      number: boundedPage
-    }));
+    searchHotels(null, boundedPage, pageSize);
   }
 
   function changeHotelSort(nextSort) {
@@ -557,8 +538,7 @@ function App() {
     setLoading(true);
 
     window.setTimeout(() => {
-      const pageSize = hotelPage.size || HOTEL_RESULTS_PAGE_SIZE;
-      applyHotelResults(rawHotelResults, 0, pageSize, nextSort, hotelFilters);
+      applyHotelResults(rawHotelResults, hotelPage, nextSort, hotelFilters);
       setLoading(false);
     }, 240);
   }
@@ -572,8 +552,7 @@ function App() {
     setLoading(true);
 
     window.setTimeout(() => {
-      const pageSize = hotelPage.size || HOTEL_RESULTS_PAGE_SIZE;
-      applyHotelResults(rawHotelResults, 0, pageSize, hotelSort, mergedFilters);
+      applyHotelResults(rawHotelResults, hotelPage, hotelSort, mergedFilters);
       setLoading(false);
     }, 240);
   }
@@ -703,7 +682,7 @@ function App() {
           ...bookingWithGuests,
           status: verifiedPayment?.bookingStatus || "CONFIRMED",
           id: created?.id || `RM-${Date.now()}`,
-          hotelName: selectedHotel.name || `Roomly ${selectedHotel.city}`,
+          hotelName: displayHotelName(selectedHotel),
           roomType: selectedRoom.type,
           city: selectedHotel.city,
           photo: firstPhoto(selectedRoom, img.roomA)

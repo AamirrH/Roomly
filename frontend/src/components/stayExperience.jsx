@@ -13,16 +13,17 @@ import {
   X
 } from "lucide-react";
 import { img } from "../data/roomlyContent";
-import { firstPhoto, money, nights } from "../lib/display";
+import { displayHotelName, firstPhoto, money, nights } from "../lib/display";
 
 export function HotelDetail({ hotel, rooms, query, navigate, selectRoom, bookingBlocked }) {
   const amenities = ["Luxury Spa", "Michelin Dining", "Indoor Pool", "Valet Parking", "Private Gym"];
+  const hotelName = displayHotelName(hotel);
   return (
     <main className="detail-page">
       <button className="back-link" onClick={() => navigate("hotels")}><ChevronLeft size={18} /> Hotels</button>
       <header className="detail-header">
         <div>
-          <h1>{hotel?.name || `Roomly ${hotel?.city}`}</h1>
+          <h1>{hotelName}</h1>
           <p><MapPin size={15} /> {hotel?.address || hotel?.city}</p>
         </div>
         <div className="detail-rating">
@@ -31,7 +32,7 @@ export function HotelDetail({ hotel, rooms, query, navigate, selectRoom, booking
         </div>
       </header>
       <section className="photo-mosaic">
-        <img className="main" src={firstPhoto(hotel, img.detailHero)} alt="Hotel suite" />
+        <img className="main" src={firstPhoto(hotel, img.detailHero)} alt={`${hotelName} suite`} />
         <img src={img.bath} alt="Hotel bath" />
         <div>
           <img src={img.breakfast} alt="Breakfast tray" />

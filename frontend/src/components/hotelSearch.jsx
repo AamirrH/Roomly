@@ -18,7 +18,7 @@ import {
   Wifi
 } from "lucide-react";
 import { fallbackHotels, img } from "../data/roomlyContent";
-import { firstPhoto, money } from "../lib/display";
+import { displayHotelName, firstPhoto, money } from "../lib/display";
 
 const AVAILABLE_CITIES = [
   "Mumbai",
@@ -392,7 +392,7 @@ function SectionHeader({ eyebrow, title, inverse = false }) {
 }
 
 function HotelCard({ hotel, onOpen }) {
-  const hotelName = hotel.hotelName || hotel.name || `Roomly ${hotel.city}`;
+  const hotelName = displayHotelName(hotel);
   const hotelAddress = hotel.address || hotel.contactInfo?.completeAddress || hotel.contactInfo?.location || hotel.city;
   return (
     <article className="hotel-card">

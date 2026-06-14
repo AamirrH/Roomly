@@ -78,6 +78,23 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             @Param("numberOfRooms") Integer numberOfRooms
     );
 
+    @Query("""
+   SELECT i FROM Inventory i
+   JOIN FETCH i.hotel
+   JOIN FETCH i.room
+   WHERE i.hotel.id IN :hotelIds
+   AND i.date >= :checkInDate AND i.date < :checkOutDate
+   AND i.closed = false
+   AND (i.totalCount - i.bookedCount) >= :numberOfRooms
+   ORDER BY i.hotel.id, i.room.id, i.date
+   """)
+    List<Inventory> findAvailableInventoriesForHotels(
+            @Param("hotelIds") List<Long> hotelIds,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") Integer numberOfRooms
+    );
+
     @Query(value =
             """
     SELECT i from  Inventory i
