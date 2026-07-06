@@ -107,11 +107,6 @@ function normalizeSearchQuery(searchQuery) {
   };
 }
 
-function apiCheckPath() {
-  const query = defaultQuery();
-  return `/roomly/api/v1/hotels/search?checkInDate=${query.checkInDate}&checkOutDate=${query.checkOutDate}&numberOfRooms=1&pageNumber=0&pageSize=1`;
-}
-
 function parseJwtPayload(token) {
   if (!token) return null;
   try {
@@ -167,10 +162,6 @@ function roleLabel(user) {
   return role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function liveItemCount(payload) {
-  return responseItems(payload).length;
-}
-
 function request(path, options = {}) {
   return apiRequest(API_BASE, ACCESS_TOKEN_KEY, path, options);
 }
@@ -210,11 +201,6 @@ function App() {
   const [cancelTarget, setCancelTarget] = React.useState(null);
   const [toast, setToast] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  const [apiStatus, setApiStatus] = React.useState({
-    state: "checking",
-    label: "Checking API",
-    detail: API_BASE
-  });
   const hotelSearchCache = React.useRef(new Map());
 
   React.useEffect(() => {
@@ -242,70 +228,6 @@ function App() {
       const method = options.replace ? "replaceState" : "pushState";
       window.history[method]({ view: next }, "", nextHash);
     }
-  }
-
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 3500);
-
-    async function checkBackend() {
-      try {
-        const response = await fetch(`${API_BASE}${apiCheckPath()}`, {
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal
-        });
-
-        if (!response.ok) {
-          setApiStatus({
-            state: "error",
-            label: "Backend error",
-            detail: `HTTP ${response.status}`
-          });
-          return;
-        }
-
-        const text = await response.text();
-        const payload = text ? JSON.parse(text) : null;
-        const count = liveItemCount(payload);
-        setApiStatus({
-          state: count > 0 ? "data" : "empty",
-          label: count > 0 ? "Live data" : "Backend live",
-          detail: count > 0 ? `${count} result${count === 1 ? "" : "s"}` : "No data returned"
-        });
-      } catch (error) {
-        if (error.name === "AbortError") return;
-        setApiStatus({
-          state: "offline",
-          label: "Not connected",
-          detail: API_BASE
-        });
-      } finally {
-        window.clearTimeout(timeout);
-      }
-    }
-
-    checkBackend();
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, []);
-
-  function noteApiSuccess(payload) {
-    const count = liveItemCount(payload);
-    setApiStatus({
-      state: count > 0 ? "data" : "empty",
-      label: count > 0 ? "Live data" : "Backend live",
-      detail: count > 0 ? `${count} result${count === 1 ? "" : "s"}` : "No data returned"
-    });
-  }
-
-  function noteApiFailure(error) {
-    setApiStatus({
-      state: error?.status ? "error" : "offline",
-      label: error?.status ? "Backend error" : "Not connected",
-      detail: error?.status ? `HTTP ${error.status}` : API_BASE
-    });
   }
 
   function notify(message) {
@@ -448,7 +370,6 @@ function App() {
     setHotelResults(sortedHotels);
     setHotels(sortedHotels);
     setHotelPage(nextMetadata);
-    noteApiSuccess(sortedHotels);
     return nextMetadata;
   }
 
@@ -511,7 +432,6 @@ function App() {
       }
       if (!requestedPage.content.length) notify("No live stays returned for these dates.");
     } catch (error) {
-      noteApiFailure(error);
       setRawHotelResults(fallbackHotels);
       setHotelResults(fallbackHotels);
       setHotels(fallbackHotels);
@@ -573,11 +493,9 @@ function App() {
       });
       const availableRooms = await request(`/roomly/api/v1/hotels/${hotel.id}?${params.toString()}`);
       const roomContent = responseItems(availableRooms);
-      noteApiSuccess(roomContent);
       setRooms(roomContent.length ? roomContent : fallbackRooms.map((room) => ({ ...room, hotelId: hotel.id })));
       if (!roomContent.length) notify("No live rooms returned yet. Showing sample room selections.");
     } catch (error) {
-      noteApiFailure(error);
       setRooms(fallbackRooms.map((room) => ({ ...room, hotelId: hotel.id })));
       notify("Room request failed. Showing sample room selections.");
     } finally {
@@ -783,7 +701,6 @@ function App() {
         authUser={authUser}
         openAuth={openAuth}
         logout={logout}
-        apiStatus={apiStatus}
       />
       {loading && <div className="loading-strip">Curating your request</div>}
       {view === "home" && <Landing query={query} updateQuery={updateQuery} searchHotels={searchHotels} openHotel={openHotel} />}
@@ -815,7 +732,7 @@ function App() {
   );
 }
 
-function Navbar({ view, navigate, menuOpen, setMenuOpen, searchHotels, authUser, openAuth, logout, apiStatus }) {
+function Navbar({ view, navigate, menuOpen, setMenuOpen, searchHotels, authUser, openAuth, logout }) {
   const links = [
     ["hotels", "Hotels"],
     ...(isGuestUser(authUser) ? [["bookings", "My Bookings"]] : []),
@@ -835,7 +752,6 @@ function Navbar({ view, navigate, menuOpen, setMenuOpen, searchHotels, authUser,
         ))}
       </nav>
       <div className="nav-actions">
-        <ApiStatusPill status={apiStatus} />
         {authUser ? (
           <div className="session-chip">
             <span>{authUser.username?.slice(0, 1) || "R"}</span>
@@ -855,18 +771,6 @@ function Navbar({ view, navigate, menuOpen, setMenuOpen, searchHotels, authUser,
         </button>
       </div>
     </header>
-  );
-}
-
-function ApiStatusPill({ status }) {
-  return (
-    <div className={`api-status ${status.state}`} title={`${status.label}: ${status.detail}`}>
-      <span />
-      <div>
-        <strong>{status.label}</strong>
-        <small>{status.detail}</small>
-      </div>
-    </div>
   );
 }
 
