@@ -16,12 +16,12 @@ The project started as an Airbnb-style booking backend and grew into a complete 
 - 🏨 **Hotel manager/admin dashboard** for hotels, rooms, inventory, bookings, and reports.
 - 👤 **User ownership checks** at the service layer so users cannot act on another user's booking by guessing IDs.
 - 🧯 **Global exception handling** for custom domain errors, validation errors, security errors, and generic failures.
-- 🚀 **Deployed full-stack app** using Vercel frontend, Railway backend, and Neon PostgreSQL.
+- 🚀 **Deployed full-stack app** using Vercel frontend, Render backend, and Neon PostgreSQL.
 
 ## Live Demo 🌐
 
 - Frontend: `https://roomly-xi.vercel.app/`
-- Backend: `https://roomly-production-dba9.up.railway.app/`
+- Backend: `https://roomly-bcjb.onrender.com`
 
 Note: this is a portfolio deployment using demo hotels and test payment credentials. Some data is seeded and may not represent real hotels.
 
@@ -100,7 +100,7 @@ Note: this is a portfolio deployment using demo hotels and test payment credenti
 | External API | Google Calendar Holiday API |
 | Validation | Jakarta Bean Validation |
 | Mapping | ModelMapper |
-| Deployment | Vercel, Railway, Neon PostgreSQL |
+| Deployment | Vercel, Render, Neon PostgreSQL |
 | Build Tools | Maven, npm |
 
 ## Roles
@@ -327,10 +327,10 @@ http://127.0.0.1:5173
 ## Deployment Notes 🚀
 
 - Frontend can be deployed on Vercel.
-- Backend can be deployed on Railway.
+- Backend can be deployed on Render.
 - PostgreSQL can be hosted on Neon.
-- On Railway, use environment variables instead of committing `application.properties`.
-- Set `SERVER_PORT=${{PORT}}` or use Railway's expected port behavior.
+- On Render, use environment variables instead of committing `application.properties`.
+- Set `SERVER_PORT=${{PORT}}` or use Render's expected port behavior.
 - Add the deployed frontend URL to CORS config/env.
 - Use `JAVA_TOOL_OPTIONS=-Xms128m -Xmx512m -XX:+UseSerialGC` on small containers if memory is tight.
 
@@ -357,7 +357,7 @@ Roomly is deployed and functional with:
 - role-aware frontend
 - admin/manager dashboard
 - Neon PostgreSQL data
-- Railway backend
+- Render backend
 - Vercel frontend
 
 Built with a lot of debugging, iteration, and stubbornness. 🙂
