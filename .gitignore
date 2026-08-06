@@ -55,3 +55,6 @@ Thumbs.db
 
 ## Environment Variables
 src/main/resources/application.properties
+
+### Load-test outputs ###
+load-tests/results/
